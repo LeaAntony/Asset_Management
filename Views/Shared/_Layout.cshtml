@@ -1,0 +1,1209 @@
+﻿@using Asset_Management.Function
+@using Microsoft.AspNetCore.Http;
+@using System.Security.Claims;
+@inject IHttpContextAccessor HttpContextAccessor
+@{
+    string url = ViewContext.HttpContext.Request.Path;
+    string lastSegment = url.Split('/').Last();
+
+    string sesa_id = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    string user_level = User.FindFirst("asset_management_level")?.Value;
+    string user_role = User.FindFirst("asset_management_role")?.Value;
+    string name = User.FindFirst("asset_management_name")?.Value;
+    string user_role_manage_user = User.FindFirst("asset_management_role_manage_user")?.Value;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Asset Management</title>
+
+    <link rel="icon" type="image/x-icon" href="~/favicon.ico">
+
+    <link href="~/lib/adminlte/plugins/fontawesome-free/css/all.min.css" rel="stylesheet" />
+    <link href="~/lib/adminlte/plugins/fontawesome-free/css/fontawesome.min.css" rel="stylesheet" />
+    <link href="~/lib/adminlte/plugins/fontawesome-free/css/solid.min.css" rel="stylesheet" />
+    <link href="~/lib/adminlte/plugins/tempusdominus-bootstrap-4/css/tempusdominus-bootstrap-4.min.css" rel="stylesheet" />
+    <link href="~/lib/select2/css/select2.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/lib/DataTables-1.11.3/css/dataTables.bootstrap4.min.css" />
+    <link rel="stylesheet" href="~/lib/datepicker/datepicker3.css" />
+    <link rel="stylesheet" href="~/lib/bootstrap-select/dist/css/bootstrap-select.css" />
+    <link href="~/lib/adminlte/dist/css/adminlte.css" rel="stylesheet" />
+    <link href="~/lib/adminlte/plugins/sweetalert2/sweetalert2.css" rel="stylesheet" />
+    <link href="~/lib/adminlte/plugins/chart.js/Chart.min.css" rel="stylesheet" />
+    <link href="~/lib/adminlte/plugins/overlayScrollbars/css/OverlayScrollbars.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/custom-fonts.css?v=1.1" />
+</head>
+<body class="sidebar-mini layout-fixed layout-navbar-fixed sidebar-collapse" style="padding: 0 !important; margin: 0 !important; ">
+    <div class="wrapper">
+        <nav class="main-header navbar navbar-expand border-bottom navbar-light bg-light fh-fixedHeader">
+            <ul class="navbar-nav align-items-center">
+                <li class="nav-item">
+                    <a class="nav-link" data-widget="pushmenu" href="#">
+                        <i class="fa fa-bars" aria-hidden="true"></i>
+                    </a>
+                </li>
+                <li class="nav-item mx-auto">
+                    <img src="~/images/logo/amt_black.png" alt="Logo" class="nav-logo">
+                </li>
+            </ul>
+
+            <div class="ml-auto d-flex align-items-center">
+                <div class="dropdown">
+                    <div class="d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false" style="cursor:pointer;">
+                        <div class="d-flex flex-column me-2">
+                            <h8 class="text-gray" style="line-height: 1 !important;">@name</h8>
+                            <h8 class="text-gray text-right" style="line-height: 1 !important;"><small>@sesa_id</small></h8>
+                        </div>
+                        <div class="image">
+                            <img src="~/assets/header.png"
+                                 class="img-circle bg-white"
+                                 alt="User Image"
+                                 style="width:40px; height:40px; object-fit:cover;">
+                        </div>
+                    </div>
+
+                    <ul class="dropdown-menu dropdown-menu-end mt-2">
+                        <li class="dropdown-item disabled">
+                            <small><strong>Level:</strong> @char.ToUpper(user_level?[0] ?? ' ')@user_level?.Substring(1).ToLower()</small>
+                        </li>
+                        <li class="dropdown-item disabled">
+                            <small><strong>Role:</strong> @char.ToUpper(user_role?[0] ?? ' ')@user_role?.Substring(1).ToLower()</small>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a href="@Url.Action("Logout", "Home")" class="dropdown-item d-flex align-items-center">
+                                <i class="nav-icon fas fa-sign-out-alt me-2"></i>
+                                Log Out
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <aside class="main-sidebar sidebar-dark-success elevation-5">
+            <a href="#" class="brand-link text-center">
+                <img id="sidebar-brand-img"
+                                 src="@Url.Content("~/images/logo/aml_white.png")"
+                     alt="Asset Management Logo"
+                     style="opacity: .8; transition: opacity 0.3s ease; max-height: 29px;">
+            </a>
+            <div class="sidebar">
+                <nav class="mt-3">
+                    <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" data-accordion="true" role="menu">
+                        <li class="nav-item">
+                            <a href="@Url.Action("Dashboard", "Home")" class="nav-link @Html.IsActive("Home", "Dashboard")">
+                                <i class="nav-icon fas fa-chart-bar"></i>
+                                <p>Dashboard</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="@Url.Action("DashboardNonAsset", "Home")" class="nav-link @Html.IsActive("Home", "DashboardNonAsset")">
+                                <i class="nav-icon fas fa-chart-bar"></i>
+                                <p>Dashboard Non-Asset</p>
+                            </a>
+                        </li>
+
+                        @if (user_level == "requestor")
+                        {
+                            string checkMenuReqAssets = Html.IsMenuopen("Requestor", "AssetStandardName") + Html.IsMenuopen("Requestor", "AssetList") + Html.IsMenuopen("Requestor", "AssetAUC") + Html.IsMenuopen("Requestor", "SummaryCount");
+                            string checkActiveReqAssets = Html.IsActive("Requestor", "AssetStandardName") + Html.IsActive("Requestor", "AssetList") + Html.IsActive("Requestor", "AssetAUC") + Html.IsActive("Requestor", "SummaryCount");
+
+                            string checkMenuReqDisposal = Html.IsMenuopen("Requestor", "FormDisposal") + Html.IsMenuopen("Requestor", "DisposalList");
+                            string checkActiveReqDisposal = Html.IsActive("Requestor", "FormDisposal") + Html.IsActive("Requestor", "DisposalList");
+
+                            string checkMenuReqTransfer = Html.IsMenuopen("Requestor", "GatePassNew") + Html.IsMenuopen("Requestor", "GatePassList") + Html.IsMenuopen("NewPic", "PicConfirm") + Html.IsMenuopen("Shipping", "ShippingList");
+                            string checkActiveReqTransfer = Html.IsActive("Requestor", "GatePassNew") + Html.IsActive("Requestor", "GatePassList") + Html.IsActive("NewPic", "PicConfirm") + Html.IsActive("Shipping", "ShippingList");
+
+                            string checkMenuReqTransferNA = Html.IsMenuopen("Requestor", "GatePassNonAsset") + Html.IsMenuopen("Requestor", "GatePassNonAssetList") + Html.IsMenuopen("Shipping", "ShippingNonAssetList");
+                            string checkActiveReqTransferNA = Html.IsActive("Requestor", "GatePassNonAsset") + Html.IsActive("Requestor", "GatePassNonAssetList") + Html.IsActive("Shipping", "ShippingNonAssetList");
+
+                            <li class="nav-header">Assets</li>
+                            <li class="nav-item has-treeview @checkMenuReqAssets">
+                                <a href="#" class="nav-link @checkActiveReqAssets">
+                                    <i class="nav-icon fas fa-boxes"></i>
+                                    <p>Assets<i class="fas fa-angle-left right"></i></p>
+                                    <span id="assetsTotalBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("AssetList", "Requestor")" class="nav-link @Html.IsActive("Requestor", "AssetList")">
+                                            <i class="ml-2 nav-icon fas fa-table"></i>
+                                            <p>Asset List</p>
+                                            <span id="assetListRequestorBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-header">Transfer</li>
+                            <li class="nav-item has-treeview @checkMenuReqTransfer">
+                                <a href="#" class="nav-link @checkActiveReqTransfer">
+                                    <i class="nav-icon fas fa-truck"></i>
+                                    <p>Asset Transfer<i class="fas fa-angle-left right"></i></p>
+                                    <span id="transferTotalBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("GatePassNew", "Requestor")" class="nav-link @Html.IsActive("Requestor", "GatePassNew")">
+                                            <i class="ml-2 nav-icon fas fa-file-alt"></i>
+                                            <p>Form Asset Transfer</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("GatePassList", "Requestor")" class="nav-link @Html.IsActive("Requestor", "GatePassList")">
+                                            <i class="ml-2 nav-icon fas fa-list"></i>
+                                            <p>My Transfer List</p>
+                                            <span id="gatepassListRequestorBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                        </a>
+                                    </li>
+                                    @if (user_role == "shipping")
+                                    {
+                                        <li class="nav-item">
+                                            <a href="@Url.Action("ShippingList", "Shipping")" class="nav-link @Html.IsActive("Shipping", "ShippingList")">
+                                                <i class="ml-2 nav-icon fas fa-ship"></i>
+                                                <p>Shipping List</p>
+                                                <span id="shippingListRequestorBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+
+                            <li class="nav-item has-treeview @checkMenuReqTransferNA">
+                                <a href="#" class="nav-link @checkActiveReqTransferNA">
+                                    <i class="nav-icon fas fa-truck"></i>
+                                    <p>Non-Asset Transfer<i class="fas fa-angle-left right"></i></p>
+                                    <span id="nonAssetTransferTotalBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("GatePassNonAsset", "Requestor")" class="nav-link @Html.IsActive("Requestor", "GatePassNonAsset")">
+                                            <i class="ml-2 nav-icon fas fa-file-alt"></i>
+                                            <p>Form Non-Asset Transfer</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("GatePassNonAssetList", "Requestor")" class="nav-link @Html.IsActive("Requestor", "GatePassNonAssetList")">
+                                            <i class="ml-2 nav-icon fas fa-list"></i>
+                                            <p>My Transfer List</p>
+                                            <span id="gatepassNonAssetListRequestorBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                        </a>
+                                    </li>
+                                    @if (user_role == "shipping")
+                                    {
+                                        <li class="nav-item">
+                                            <a href="@Url.Action("ShippingNonAssetList", "Shipping")" class="nav-link @Html.IsActive("Shipping", "ShippingNonAssetList")">
+                                                <i class="ml-2 nav-icon fas fa-ship"></i>
+                                                <p>Shipping List</p>
+                                                <span id="shippingNonAssetListRequestorBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+
+                        @if (user_level == "approver")
+                        {
+
+                            string checkMenuApprDisposal = Html.IsMenuopen("Requestor", "FormDisposal") + Html.IsMenuopen("Requestor", "DisposalList") + Html.IsMenuopen("Approver", "DisposalList");
+                            string checkActiveApprDisposal = Html.IsActive("Requestor", "FormDisposal") + Html.IsActive("Requestor", "DisposalList") + Html.IsActive("Approver", "DisposalList");
+
+                            string checkMenuApprTransfer = Html.IsMenuopen("Requestor", "GatePassNew") + Html.IsMenuopen("Requestor", "GatePassList") + Html.IsMenuopen("Approver", "GatePassList") + Html.IsMenuopen("NewPic", "PicConfirm");
+                            string checkActiveApprTransfer = Html.IsActive("Requestor", "GatePassNew") + Html.IsActive("Requestor", "GatePassList") + Html.IsActive("Approver", "GatePassList") + Html.IsActive("NewPic", "PicConfirm");
+
+                            string checkMenuApprTransferNA = Html.IsMenuopen("Requestor", "GatePassNonAsset") + Html.IsMenuopen("Requestor", "GatePassNonAssetList") + Html.IsMenuopen("Approver", "GatePassNonAssetList");
+                            string checkActiveApprTransferNA = Html.IsActive("Requestor", "GatePassNonAsset") + Html.IsActive("Requestor", "GatePassNonAssetList") + Html.IsActive("Approver", "GatePassNonAssetList");
+
+                            string checkMenuApprAssets = (user_role == "fbp")
+                            ? Html.IsMenuopen("Finance", "AssetList") + Html.IsMenuopen("Approver", "AssetAUC") + Html.IsMenuopen("Finance", "SummaryCount")
+                            : Html.IsMenuopen("Requestor", "AssetList") + Html.IsMenuopen("Requestor", "AssetAUC") + Html.IsMenuopen("Requestor", "SummaryCount");
+                            string checkActiveApprAssets = (user_role == "fbp")
+                            ? Html.IsActive("Finance", "AssetList") + Html.IsActive("Approver", "AssetAUC") + Html.IsActive("Finance", "SummaryCount")
+                            : Html.IsActive("Requestor", "AssetList") + Html.IsActive("Requestor", "AssetAUC") + Html.IsActive("Requestor", "SummaryCount");
+
+                            string checkMenuApprFinance = (user_role == "fbp")
+                            ? Html.IsMenuopen("Finance", "ReconList") + Html.IsMenuopen("Finance", "RateEuroList")
+                            : "";
+                            string checkActiveApprFinance = (user_role == "fbp")
+                            ? Html.IsActive("Finance", "ReconList") + Html.IsActive("Finance", "RateEuroList")
+                            : "";
+
+
+                            <li class="nav-header">Assets</li>
+                            <li class="nav-item has-treeview @checkMenuApprAssets">
+                                <a href="#" class="nav-link @checkActiveApprAssets">
+                                    <i class="nav-icon fas fa-boxes"></i>
+                                    <p>Assets<i class="fas fa-angle-left right"></i></p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    @if (user_role == "fbp")
+                                    {
+                                        <li class="nav-item">
+                                            <a href="@Url.Action("AssetList", "Finance")" class="nav-link @Html.IsActive("Finance", "AssetList")">
+                                                <i class="ml-2 nav-icon fas fa-table"></i>
+                                                <p>Asset List</p>
+                                            </a>
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li class="nav-item">
+                                            <a href="@Url.Action("AssetList", "Requestor")" class="nav-link @Html.IsActive("Requestor", "AssetList")">
+                                                <i class="ml-2 nav-icon fas fa-table"></i>
+                                                <p>Asset List</p>
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+
+                            <li class="nav-header">Transfer</li>
+                            <li class="nav-item has-treeview @checkMenuApprTransfer">
+                                <a href="#" class="nav-link @checkActiveApprTransfer">
+                                    <i class="nav-icon fas fa-truck"></i>
+                                    <p>Asset Transfer<i class="fas fa-angle-left right"></i></p>
+                                    <span id="transferTotalApproverBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("GatePassNew", "Requestor")" class="nav-link @Html.IsActive("Requestor", "GatePassNew")">
+                                            <i class="ml-2 nav-icon fas fa-file-alt"></i>
+                                            <p>Form Asset Transfer</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("GatePassList", "Requestor")" class="nav-link @Html.IsActive("Requestor", "GatePassList")">
+                                            <i class="ml-2 nav-icon fas fa-list"></i>
+                                            <p>Transfer List</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("GatePassList", "Approver")" class="nav-link @Html.IsActive("Approver", "GatePassList")">
+                                            <i class="ml-2 nav-icon fas fa-check-double"></i>
+                                            <p>Transfer Approval List</p>
+                                            <span id="gatepassApprovalApproverBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-item has-treeview @checkMenuApprTransferNA">
+                                <a href="#" class="nav-link @checkActiveApprTransferNA">
+                                    <i class="nav-icon fas fa-truck"></i>
+                                    <p>Non-Asset Transfer<i class="fas fa-angle-left right"></i></p>
+                                    <span id="nonAssetTransferTotalApproverBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("GatePassNonAsset", "Requestor")" class="nav-link @Html.IsActive("Requestor", "GatePassNonAsset")">
+                                            <i class="ml-2 nav-icon fas fa-file-alt"></i>
+                                            <p>Form Non-Asset Transfer</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("GatePassNonAssetList", "Requestor")" class="nav-link @Html.IsActive("Requestor", "GatePassNonAssetList")">
+                                            <i class="ml-2 nav-icon fas fa-list"></i>
+                                            <p>My Transfer List</p>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("GatePassNonAssetList", "Approver")" class="nav-link @Html.IsActive("Approver", "GatePassNonAssetList")">
+                                            <i class="ml-2 nav-icon fas fa-check-double"></i>
+                                            <p>Transfer Approval List</p>
+                                            <span id="gatepassNonAssetApprovalApproverBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                        }
+
+                        @if (user_level == "finance")
+                        {
+                            string checkMenuFinAssets = Html.IsMenuopen("Finance", "AssetList") + Html.IsMenuopen("Finance", "AssetAUC") + Html.IsMenuopen("Finance", "SummaryCount") + Html.IsMenuopen("Requestor", "AssetStandardName");
+                            string checkActiveFinAssets = Html.IsActive("Finance", "AssetList") + Html.IsActive("Finance", "AssetAUC") + Html.IsActive("Finance", "SummaryCount") + Html.IsActive("Requestor", "AssetStandardName");
+
+                            string checkMenuFinInvoice = Html.IsMenuopen("Finance", "CreateInvoice") + Html.IsMenuopen("Finance", "InvoiceList") + Html.IsMenuopen("Finance", "InvoiceApprovalList");
+                            string checkActiveFinInvoice = Html.IsActive("Finance", "CreateInvoice") + Html.IsActive("Finance", "InvoiceList") + Html.IsActive("Finance", "InvoiceApprovalList");
+
+                            string checkMenuFinOps = Html.IsMenuopen("Finance", "Gatepass") + checkMenuFinInvoice + Html.IsMenuopen("Finance", "GatepassNonAsset") + Html.IsMenuopen("Finance", "DisposalList") + Html.IsMenuopen("Finance", "ReconList") + Html.IsMenuopen("Finance", "RateEuroList");
+                            string checkActiveFinOps = Html.IsActive("Finance", "Gatepass") + checkActiveFinInvoice + Html.IsActive("Finance", "GatepassNonAsset") + Html.IsActive("Finance", "DisposalList") + Html.IsActive("Finance", "ReconList") + Html.IsActive("Finance", "RateEuroList");
+
+                            string checkMenuMasterData = Html.IsMenuopen("Finance", "MstData_Location") + Html.IsMenuopen("Finance", "MstData_Machine") + Html.IsMenuopen("Finance", "MstData_Vendor") + Html.IsMenuopen("Finance", "MstData_VendorGatepass") + Html.IsMenuopen("Finance", "MstData_ProductFamily");
+                            string checkActiveMasterData = Html.IsActive("Finance", "MstData_Location") + Html.IsActive("Finance", "MstData_Machine") + Html.IsActive("Finance", "MstData_Vendor") + Html.IsActive("Finance", "MstData_VendorGatepass") + Html.IsActive("Finance", "MstData_ProductFamily");
+
+                            <li class="nav-header">Assets</li>
+                            <li class="nav-item has-treeview @checkMenuFinAssets">
+                                <a href="#" class="nav-link @checkActiveFinAssets">
+                                    <i class="nav-icon fas fa-boxes"></i>
+                                    <p>Assets<i class="fas fa-angle-left right"></i></p>
+                                    <span id="assetsTotalFinanceBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("AssetList", "Finance")" class="nav-link @Html.IsActive("Finance", "AssetList")">
+                                            <i class="ml-2 nav-icon fas fa-table"></i>
+                                            <p>Asset List</p>
+                                            <span id="assetListFinanceBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-header">Operations</li>
+                            <li class="nav-item has-treeview @checkMenuFinOps">
+                                <a href="#" class="nav-link @checkActiveFinOps">
+                                    <i class="nav-icon fas fa-industry"></i>
+                                    <p>Operations<i class="fas fa-angle-left right"></i></p>
+                                    <span id="operationsTotalFinanceBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("Gatepass", "Finance")" class="nav-link @Html.IsActive("Finance", "Gatepass")">
+                                            <i class="ml-2 nav-icon fas fa-truck"></i>
+                                            <p>Asset Transfer List</p>
+                                            <span id="gatepassListFinanceBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item has-treeview @checkMenuFinInvoice">
+                                        <a href="#" class="nav-link @checkActiveFinInvoice">
+                                            <i class="ml-2 nav-icon fas fa-file"></i>
+                                            <p>Invoices<i class="fas fa-angle-left right"></i></p>
+                                            <span id="invoicesTotalBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                        </a>
+                                        <ul class="nav nav-treeview">
+                                            <li class="nav-item">
+                                                <a href="@Url.Action("CreateInvoice", "Finance")" class="nav-link @Html.IsActive("Finance", "CreateInvoice")">
+                                                    <i class="ml-3 nav-icon fas fa-file-invoice-dollar"></i>
+                                                    <p>Create Invoice</p>
+                                                    <span id="createInvoiceFinanceBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                                </a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a href="@Url.Action("InvoiceList", "Finance")" class="nav-link @Html.IsActive("Finance", "InvoiceList")">
+                                                    <i class="ml-3 nav-icon fas fa-file-invoice"></i>
+                                                    <p>Invoice List</p>
+                                                    <span id="invoiceListFinanceBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                                </a>
+                                            </li>
+                                            <li class="nav-item">
+                                                <a href="@Url.Action("InvoiceApprovalList", "Finance")" class="nav-link @Html.IsActive("Finance", "InvoiceApprovalList")">
+                                                    <i class="ml-3 nav-icon fas fa-clipboard-check"></i>
+                                                    <p>Invoice Approval</p>
+                                                    <span id="invoiceApprovalFinanceBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                                </a>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("GatepassNonAsset", "Finance")" class="nav-link @Html.IsActive("Finance", "GatepassNonAsset")">
+                                            <i class="ml-2 nav-icon fas fa-truck"></i>
+                                            <p>Non-Asset Transfer List</p>
+                                            <span id="gatepassNonAssetListFinanceBadge" class="badge bg-danger small-badge" style="visibility:hidden;"></span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-header">Master Data</li>
+                            <li class="nav-item has-treeview @checkMenuMasterData">
+                                <a href="#" class="nav-link @checkActiveMasterData">
+                                    <i class="nav-icon fas fa-table"></i>
+                                    <p>Master Data<i class="fas fa-angle-left right"></i></p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    <li class="nav-item">
+                                        <a href="@Url.Action("MstData_VendorGatepass", "Finance")" class="nav-link @Html.IsActive("Finance", "MstData_VendorGatepass")">
+                                            <i class="ml-2 nav-icon fas fa-table"></i>
+                                            <p>Master Vendor Gatepass</p>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </li>
+
+                            <li class="nav-header">Management</li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("UserList", "Admin")" class="nav-link @Html.IsActive("Admin", "UserList") @Html.IsActive("Admin", "UserList")">
+                                    <i class="nav-icon fas fa-users"></i>
+                                    <p>User Management</p>
+                                </a>
+                            </li>
+                        }
+                        @if (user_role != "finance" && user_role_manage_user == "1")
+                        {
+                            <li class="nav-header">Management</li>
+                            <li class="nav-item">
+                                <a href="@Url.Action("UserList", "Admin")" class="nav-link @Html.IsActive("Admin", "UserList") @Html.IsActive("Admin", "UserList")">
+                                    <i class="nav-icon fas fa-users"></i>
+                                    <p>User Management</p>
+                                </a>
+                            </li>
+                        }
+
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+        <div class="content-wrapper">
+            @RenderBody()
+        </div>
+        <footer class="main-footer">
+            <strong>Copyright &copy; 2026 <a class="text-success" href="http://asset_management.com">Asset Management</a>.</strong>
+            All rights reserved.
+            <div class="float-right d-none d-sm-inline-block">
+                <b>Version</b> 1.0.0
+            </div>
+        </footer>
+
+    </div>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/DataTables-1.11.3/js/jquery.dataTables.min.js"></script>
+    <script src="~/lib/DataTables-1.11.3/js/dataTables.bootstrap4.min.js"></script>
+    <script src="~/lib/adminlte/plugins/moment/moment.min.js"></script>
+    <script src="~/lib/adminlte/plugins/tempusdominus-bootstrap-4/js/tempusdominus-bootstrap-4.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/adminlte/dist/js/adminlte.min.js"></script>
+    <script src="~/lib/adminlte/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/lib/select2/js/select2.full.min.js"></script>
+    <script src="~/lib/datepicker/bootstrap-datepicker.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"></script>
+    <script src="~/lib/adminlte/plugins/sweetalert2/sweetalert2.min.js"></script>
+    <script src="~/lib/bootstrap-select/dist/js/bootstrap-select.js"></script>
+    <script>
+        var user_level = '@(user_level ?? "")';
+        $(document).ready(function(){
+            setTimeout(function () {
+                $(".active_menu").addClass("active");
+            },500)
+
+            if (user_level == "requestor")
+            {
+                var assetListCount = 0;
+                var gatepassListCount = 0;
+                var shippingListCount = 0;
+                var gatepassNonAssetListCount = 0;
+                var shippingNonAssetListCount = 0;
+                var badgeFetched = 0;
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetAssetListBadge", "Requestor")",
+                    success: function (data) {
+                        assetListCount = data.count;
+                        if (data.count > 0) {
+                            $("#assetListRequestorBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#assetListRequestorBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetched++;
+                        if (badgeFetched == 5) {
+                            updateTotalBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#assetListRequestorBadge").text('').css('visibility', 'hidden');
+                        badgeFetched++;
+                        if (badgeFetched == 5) {
+                            updateTotalBadges();
+                        }
+                    }
+                });
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetGatepassListBadge", "Requestor")",
+                    success: function (data) {
+                        gatepassListCount = data.count;
+                        if (data.count > 0) {
+                            $("#gatepassListRequestorBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#gatepassListRequestorBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetched++;
+                        if (badgeFetched == 5) {
+                            updateTotalBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#gatepassListRequestorBadge").text('').css('visibility', 'hidden');
+                        badgeFetched++;
+                        if (badgeFetched == 5) {
+                            updateTotalBadges();
+                        }
+                    }
+                });
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetShippingListBadge", "Shipping")",
+                    success: function (data) {
+                        shippingListCount = data.count;
+                        if (data.count > 0) {
+                            $("#shippingListRequestorBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#shippingListRequestorBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetched++;
+                        if (badgeFetched == 5) {
+                            updateTotalBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#shippingListRequestorBadge").text('').css('visibility', 'hidden');
+                        badgeFetched++;
+                        if (badgeFetched == 5) {
+                            updateTotalBadges();
+                        }
+                    }
+                });
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetGatepassNonAssetListBadge", "Requestor")",
+                    success: function (data) {
+                        gatepassNonAssetListCount = data.count;
+                        if (data.count > 0) {
+                            $("#gatepassNonAssetListRequestorBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#gatepassNonAssetListRequestorBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetched++;
+                        if (badgeFetched == 5) {
+                            updateTotalBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#gatepassNonAssetListRequestorBadge").text('').css('visibility', 'hidden');
+                        badgeFetched++;
+                        if (badgeFetched == 5) {
+                            updateTotalBadges();
+                        }
+                    }
+                });
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetShippingNonAssetListBadge", "Shipping")",
+                    success: function (data) {
+                        shippingNonAssetListCount = data.count;
+                        if (data.count > 0) {
+                            $("#shippingNonAssetListRequestorBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#shippingNonAssetListRequestorBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetched++;
+                        if (badgeFetched == 5) {
+                            updateTotalBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#shippingNonAssetListRequestorBadge").text('').css('visibility', 'hidden');
+                        badgeFetched++;
+                        if (badgeFetched == 5) {
+                            updateTotalBadges();
+                        }
+                    }
+                });
+
+                function updateTotalBadges() {
+                    var assetsTotal = assetListCount;
+                    if (assetsTotal > 0) {
+                        $("#assetsTotalBadge").text(assetsTotal).css('visibility', 'visible');
+                    } else {
+                        $("#assetsTotalBadge").text('').css('visibility', 'hidden');
+                    }
+
+                    var transferTotal = gatepassListCount + shippingListCount;
+                    if (transferTotal > 0) {
+                        $("#transferTotalBadge").text(transferTotal).css('visibility', 'visible');
+                    } else {
+                        $("#transferTotalBadge").text('').css('visibility', 'hidden');
+                    }
+
+                    var nonAssetTransferTotal = gatepassNonAssetListCount + shippingNonAssetListCount;
+                    if (nonAssetTransferTotal > 0) {
+                        $("#nonAssetTransferTotalBadge").text(nonAssetTransferTotal).css('visibility', 'visible');
+                    } else {
+                        $("#nonAssetTransferTotalBadge").text('').css('visibility', 'hidden');
+                    }
+                }
+            }
+
+            if (user_level == "finance")
+            {
+                var assetListFinanceCount = 0;
+                var gatepassListFinanceCount = 0;
+                var createInvoiceFinanceCount = 0;
+                var invoiceListFinanceCount = 0;
+                var invoiceApprovalFinanceCount = 0;
+                var gatepassNonAssetListFinanceCount = 0;
+                var badgeFetchedFinance = 0;
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetAssetListBadge", "Finance")",
+                    success: function (data) {
+                        assetListFinanceCount = data.count;
+                        if (data.count > 0) {
+                            $("#assetListFinanceBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#assetListFinanceBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetchedFinance++;
+                        if (badgeFetchedFinance == 6) {
+                            updateTotalFinanceBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#assetListFinanceBadge").text('').css('visibility', 'hidden');
+                        badgeFetchedFinance++;
+                        if (badgeFetchedFinance == 6) {
+                            updateTotalFinanceBadges();
+                        }
+                    }
+                });
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetGatepassListBadge", "Finance")",
+                    success: function (data) {
+                        gatepassListFinanceCount = data.count;
+                        if (data.count > 0) {
+                            $("#gatepassListFinanceBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#gatepassListFinanceBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetchedFinance++;
+                        if (badgeFetchedFinance == 6) {
+                            updateTotalFinanceBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#gatepassListFinanceBadge").text('').css('visibility', 'hidden');
+                        badgeFetchedFinance++;
+                        if (badgeFetchedFinance == 6) {
+                            updateTotalFinanceBadges();
+                        }
+                    }
+                });
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetCreateInvoiceBadge", "Finance")",
+                    success: function (data) {
+                        createInvoiceFinanceCount = data.count;
+                        if (data.count > 0) {
+                            $("#createInvoiceFinanceBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#createInvoiceFinanceBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetchedFinance++;
+                        if (badgeFetchedFinance == 6) {
+                            updateTotalFinanceBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#createInvoiceFinanceBadge").text('').css('visibility', 'hidden');
+                        badgeFetchedFinance++;
+                        if (badgeFetchedFinance == 6) {
+                            updateTotalFinanceBadges();
+                        }
+                    }
+                });
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetinvoiceListBadge", "Finance")",
+                    success: function (data) {
+                        invoiceListFinanceCount = data.count;
+                        if (data.count > 0) {
+                            $("#invoiceListFinanceBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#invoiceListFinanceBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetchedFinance++;
+                        if (badgeFetchedFinance == 6) {
+                            updateTotalFinanceBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#invoiceListFinanceBadge").text('').css('visibility', 'hidden');
+                        badgeFetchedFinance++;
+                        if (badgeFetchedFinance == 6) {
+                            updateTotalFinanceBadges();
+                        }
+                    }
+                });
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetInvoiceApprovalBadge", "Finance")",
+                    success: function (data) {
+                        invoiceApprovalFinanceCount = data.count;
+                        if (data.count > 0) {
+                            $("#invoiceApprovalFinanceBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#invoiceApprovalFinanceBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetchedFinance++;
+                        if (badgeFetchedFinance == 6) {
+                            updateTotalFinanceBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#invoiceApprovalFinanceBadge").text('').css('visibility', 'hidden');
+                        badgeFetchedFinance++;
+                        if (badgeFetchedFinance == 6) {
+                            updateTotalFinanceBadges();
+                        }
+                    }
+                });
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetGatepassNonAssetListBadge", "Finance")",
+                    success: function (data) {
+                        gatepassNonAssetListFinanceCount = data.count;
+                        if (data.count > 0) {
+                            $("#gatepassNonAssetListFinanceBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#gatepassNonAssetListFinanceBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetchedFinance++;
+                        if (badgeFetchedFinance == 6) {
+                            updateTotalFinanceBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#gatepassNonAssetListFinanceBadge").text('').css('visibility', 'hidden');
+                        badgeFetchedFinance++;
+                        if (badgeFetchedFinance == 6) {
+                            updateTotalFinanceBadges();
+                        }
+                    }
+                });
+
+                function updateTotalFinanceBadges() {
+                    var assetsTotalFinance = assetListFinanceCount;
+                    if (assetsTotalFinance > 0) {
+                        $("#assetsTotalFinanceBadge").text(assetsTotalFinance).css('visibility', 'visible');
+                    } else {
+                        $("#assetsTotalFinanceBadge").text('').css('visibility', 'hidden');
+                    }
+
+                    var invoicesTotalFinance = createInvoiceFinanceCount + invoiceListFinanceCount + invoiceApprovalFinanceCount;
+                    if (invoicesTotalFinance > 0) {
+                        $("#invoicesTotalBadge").text(invoicesTotalFinance).css('visibility', 'visible');
+                    } else {
+                        $("#invoicesTotalBadge").text('').css('visibility', 'hidden');
+                    }
+
+                    var operationsTotalFinance = gatepassListFinanceCount + createInvoiceFinanceCount + invoiceApprovalFinanceCount + gatepassNonAssetListFinanceCount;
+                    if (operationsTotalFinance > 0) {
+                        $("#operationsTotalFinanceBadge").text(operationsTotalFinance).css('visibility', 'visible');
+                    } else {
+                        $("#operationsTotalFinanceBadge").text('').css('visibility', 'hidden');
+                    }
+                }
+            }
+
+            if (user_level == "approver")
+            {
+                var gatepassApprovalApproverCount = 0;
+                var gatepassNonAssetApprovalApproverCount = 0;
+                var badgeFetchedApprover = 0;
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetGatepassApprovalListBadge", "Approver")",
+                    success: function (data) {
+                        gatepassApprovalApproverCount = data.count;
+                        if (data.count > 0) {
+                            $("#gatepassApprovalApproverBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#gatepassApprovalApproverBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetchedApprover++;
+                        if (badgeFetchedApprover == 2) {
+                            updateTotalApproverBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#gatepassApprovalApproverBadge").text('').css('visibility', 'hidden');
+                        badgeFetchedApprover++;
+                        if (badgeFetchedApprover == 2) {
+                            updateTotalApproverBadges();
+                        }
+                    }
+                });
+
+                $.ajax({
+                    type: "GET",
+                    url: "@Url.Action("GetGatepassNonAssetApprovalListBadge", "Approver")",
+                    success: function (data) {
+                        gatepassNonAssetApprovalApproverCount = data.count;
+                        if (data.count > 0) {
+                            $("#gatepassNonAssetApprovalApproverBadge").text(data.count).css('visibility', 'visible');
+                        } else {
+                            $("#gatepassNonAssetApprovalApproverBadge").text('').css('visibility', 'hidden');
+                        }
+                        badgeFetchedApprover++;
+                        if (badgeFetchedApprover == 2) {
+                            updateTotalApproverBadges();
+                        }
+                    },
+                    error: function () {
+                        $("#gatepassNonAssetApprovalApproverBadge").text('').css('visibility', 'hidden');
+                        badgeFetchedApprover++;
+                        if (badgeFetchedApprover == 2) {
+                            updateTotalApproverBadges();
+                        }
+                    }
+                });
+
+                function updateTotalApproverBadges() {
+                    var transferTotalApprover = gatepassApprovalApproverCount;
+                    if (transferTotalApprover > 0) {
+                        $("#transferTotalApproverBadge").text(transferTotalApprover).css('visibility', 'visible');
+                    } else {
+                        $("#transferTotalApproverBadge").text('').css('visibility', 'hidden');
+                    }
+
+                    var nonAssetTransferTotalApprover = gatepassNonAssetApprovalApproverCount;
+                    if (nonAssetTransferTotalApprover > 0) {
+                        $("#nonAssetTransferTotalApproverBadge").text(nonAssetTransferTotalApprover).css('visibility', 'visible');
+                    } else {
+                        $("#nonAssetTransferTotalApproverBadge").text('').css('visibility', 'hidden');
+                    }
+                }
+            }
+        });
+
+        $('body').on("click", function (e) {
+            $(this).removeClass('sidebar-open');
+        });
+
+        function number_to_k(n, precision = 2) {
+            let n_format = 0;
+            n_format = (n / 1000).toFixed(precision) + 'K';
+            return n_format;
+        }
+
+        $(document).ready(function () {
+            const $body = $('body');
+            const $sidebar = $('.main-sidebar');
+            const $img = $('#sidebar-brand-img');
+
+            const imgOpen = '@Url.Content("~/images/logo/amt_white.png")';
+            const imgClosed = '@Url.Content("~/images/logo/aml_white.png")';
+
+            function updateSidebarLogo() {
+                if ($body.hasClass('sidebar-collapse') && !$body.hasClass('sidebar-open')) {
+                    $img.attr('src', imgClosed);
+                } else {
+                    $img.attr('src', imgOpen);
+                }
+            }
+
+            updateSidebarLogo();
+
+            $(document).on('click', '[data-widget="pushmenu"]', function () {
+                setTimeout(updateSidebarLogo, 200);
+            });
+
+            $sidebar.on('mouseenter', function () {
+                $img.attr('src', imgOpen);
+            });
+
+            $sidebar.on('mouseleave', function () {
+                if ($body.hasClass('sidebar-collapse') && !$body.hasClass('sidebar-open')) {
+                    $img.attr('src', imgClosed);
+                }
+            });
+        });
+    </script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>
+
+<style>
+    :root {
+        --primary-blue: #3A738C;
+        --secondary-blue: #4a90b8;
+        --success-green: #3DCD58;
+        --warning-yellow: #ffd100;
+        --danger-red: #B10043;
+        --neutral-gray: #595959;
+        --light-gray: #d9d9d9;
+        --background-gray: #f8f9fa;
+        --text-dark: #2c3e50;
+        --text-light: #6c757d;
+        --success: #3DCD58;
+        --warning: #ffd100;
+        --danger: #B10043;
+    }
+
+    .nav-logo {
+        height: 35px;
+        object-fit: contain;
+        display: block;
+    }
+
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+
+    .dot {
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .nav-sidebar .nav-link p,
+    .nav-sidebar .nav-header {
+        font-size: 10pt !important;
+    }
+
+    .brand-text {
+        font-size: 13pt !important
+    }
+
+    .nav-sidebar .nav-link {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .nav-item.menu-open.has-treeview>.nav-link>.small-badge {
+        visibility: hidden !important;
+    }
+
+    .nav-sidebar .nav-link .small-badge {
+        position: absolute;
+        transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        padding: 3px 5px;
+        font-size: 0.6rem;
+        line-height: 1;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        z-index: 999;
+    }
+
+    body:not(.sidebar-collapse) .nav-sidebar .nav-link .small-badge {
+        transform: translateY(0) scale(0.75);
+        opacity: 1;
+    }
+
+    body.sidebar-collapse .nav-sidebar .nav-link .small-badge {
+        right: 0px;
+        top: 0px;
+        transform: translateY(0) scale(0.75);
+        opacity: 1;
+    }
+
+    @@keyframes pulse-red {
+        0% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7);
+        }
+
+        70% {
+            box-shadow: 0 0 0 5px rgba(220, 53, 69, 0);
+        }
+
+        100% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+        }
+    }
+
+    body.sidebar-collapse .nav-sidebar .nav-link .small-badge {
+        animation: pulse-red 5s infinite;
+    }
+
+    .currency-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .currency-symbol {
+        flex-shrink: 0;
+    }
+
+    .currency-value {
+        text-align: right;
+        flex-grow: 1;
+    }
+
+    .list-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e9ecef;
+        margin-bottom: 16px;
+        transition: box-shadow 0.3s ease;
+    }
+
+        .list-card .card-body {
+            padding: 16px;
+        }
+
+    .modal-content {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e9ecef;
+    }
+
+    .modal-header {
+        background-color: var(--light-gray);
+        border-bottom: 2px solid var(--light-gray);
+        padding: 16px 16px 16px 16px;
+        border-radius: 12px 12px 0 0;
+        border: none;
+    }
+
+        .modal-header .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin: 0;
+        }
+
+        .modal-header .close {
+            color: var(--text-light);
+            opacity: 0.7;
+        }
+
+            .modal-header .close:hover {
+                opacity: 1;
+            }
+
+    .modal-body {
+        padding: 16px 16px 16px 16px;
+        overflow-x: hidden;
+    }
+
+    #statusSelect2.select2 {
+        font-size: 12px;
+    }
+
+        #statusSelect2.select2 .select2-selection {
+            height: calc(1.8125rem + 2px);
+            padding: 0.25rem 0.5rem;
+        }
+
+            #statusSelect2.select2 .select2-selection .select2-selection__arrow {
+                height: 26px;
+            }
+
+    .select2-results {
+        font-size: 12px;
+    }
+
+    .fade-in {
+        animation: dashboardFadeIn 0.6s ease-in;
+    }
+
+    .slide-up {
+        animation: dashboardSlideUp 0.5s ease-out;
+    }
+
+    @@keyframes dashboardFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes dashboardSlideUp {
+        from {
+            transform: translateY(30px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    @@media screen and (max-width: 768px) {
+        .modal-body {
+            padding: 16px;
+        }
+
+        .kpi-card {
+            margin-bottom: 15px;
+        }
+
+        .kpi-value {
+            font-size: 20px;
+        }
+
+        .kpi-label {
+            font-size: 12px;
+        }
+
+        .professional-table {
+            font-size: 11px;
+        }
+
+            .professional-table thead th {
+                padding: 12px 8px;
+                font-size: 10px;
+            }
+
+            .professional-table tbody td {
+                padding: 8px;
+            }
+    }
+
+    @@media screen and (max-width: 576px) {
+        .modal-header {
+            padding: 16px 20px 12px;
+        }
+
+            .modal-header .modal-title {
+                font-size: 16px;
+            }
+
+        .modal-body {
+            padding: 12px;
+        }
+
+        .kpi-value {
+            font-size: 18px;
+        }
+
+        .kpi-label {
+            font-size: 11px;
+        }
+
+        .professional-table {
+            font-size: 11px;
+        }
+
+            .professional-table thead th {
+                padding: 12px 8px;
+                font-size: 10px;
+            }
+
+            .professional-table tbody td {
+                padding: 8px;
+            }
+    }
+</style>

@@ -1,0 +1,912 @@
+﻿@* @using System.Data; *@
+@* @model List<TransferListModel> *@
+@using Microsoft.AspNetCore.Mvc.Rendering;
+@using Microsoft.AspNetCore.Http;
+@using Asset_Management.Function;
+
+@{
+    List<string> deptList = ViewBag.deptList;
+    List<string> plantList = ViewBag.plantList;
+}
+
+<style>
+    .hero {
+        min-height: 70px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        color: #fff;
+    }
+
+        .hero .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+        }
+
+        .hero .hero-body {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        .hero .hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+    .inner {
+        height: 70px;
+        position: relative;
+    }
+
+    .hero .inner {
+        background: rgba(0,0,0,0.7);
+    }
+
+    .professional-table {
+        font-size: 12px;
+        border-collapse: separate;
+        border-spacing: 0;
+        clip-path: inset(0 round 8px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+        .professional-table thead th {
+            background: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .professional-table tbody td {
+            border: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .professional-table tbody tr:hover {
+            background-color: var(--background-gray);
+        }
+
+        .professional-table th,
+        .professional-table td {
+            box-sizing: border-box;
+            white-space: nowrap;
+        }
+
+    .modal {
+        overflow: auto !important;
+    }
+
+    #loadingSpinner {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+        #loadingSpinner img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+    .box_form_input {
+        background-color: #fcfcfc;
+        border-radius: 5px;
+        box-shadow: 1px 2px 8px 2px rgba(152,152,152,0.7);
+    }
+
+    .btn-delegate {
+        background-color: #17a2b8;
+        border-color: #17a2b8;
+        color: white;
+    }
+
+        .btn-delegate:hover {
+            background-color: #138496;
+            border-color: #117a8b;
+            color: white;
+        }
+
+</style>
+
+<section id="hero" class="hero bg-dark position-relative" style="background: url('@Url.Content("~/images/background/bg-am.jpg")') center center / cover no-repeat fixed;">
+    <div class="inner d-flex justify-content-between align-items-center px-3 py-2 w-100">
+
+        <div>
+        </div>
+
+        <div class="position-absolute top-50 start-50 translate-middle text-center">
+            <h3 class="text-white mb-0">
+                <i class="fa fa-users text-success"></i>
+                <b>User Management</b>
+            </h3>
+        </div>
+
+        <div class="ms-auto">
+        </div>
+
+    </div>
+</section>
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-12 mt-3">
+                <div class="list-card card fade-in">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <table class="table professional-table align-center nowrap" id="table_users" style="font-size:8pt; width:100%">
+                                    <thead class="align-middle text-center" style="background: var(--primary-blue); color: white; font-weight: 600;">
+                                        <tr>
+                                            <th>SESA ID</th>
+                                            <th>Name</th>
+                                            <th>Email</th>
+                                            <th>Department</th>
+                                            <th>PLANT</th>
+                                            <th>Level</th>
+                                            <th>Role</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="loadingSpinner" style="display: none;">
+                <span class="spinner-border spinner-border" role="status" aria-hidden="true"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<a class="btn btn-success btn-circle btn-sm ml-auto text-white" name="btn-upload" style="display: none;" onclick="add_user()">
+    <i class="fas fa-plus"></i>
+    Add New User
+</a>
+
+<div id="modal_adduser" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:50%">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Add New User</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form enctype="multipart/form-data" id="form_add_user">
+                    <table class="table table-sm">
+                        <tr>
+                            <td class="align-middle">SESA ID</td>
+                            <td style="width:60%">
+                                <input class="form-control" name="sesa_id" id="sesa_id" style="width:100%" required />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Name</td>
+                            <td style="width:60%">
+                                <input class="form-control" name="name" id="name" style="width:100%" required />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Email</td>
+                            <td style="width:60%">
+                                <input class="form-control" name="email" id="email" style="width:100%" required />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Department</td>
+                            <td>
+                                <select class="form-control" name="department" style="width:100%" id="department" required>
+                                    <option value="">-- SELECT DEPARTMENT --</option>
+                                    @foreach (string dept in deptList)
+                                    {
+                                        <option value="@dept">@dept</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Plant</td>
+                            <td>
+                                <select class="form-control" name="plant" id="plant" style="width:100%" required>
+                                    <option value="">-- SELECT PLANT --</option>
+                                    @foreach (string plant in plantList)
+                                    {
+                                        <option value="@plant">@plant</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Level</td>
+                            <td>
+                                <select class="form-control" name="level" id="level" style="width:100%" required>
+                                    <option value="">-- SELECT LEVEL --</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="requestor">Requestor</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="approver">Approver</option>
+                                    <option value="security">Security</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Role</td>
+                            <td>
+                                <select class="form-control" name="role" id="role" style="width:100%" disabled>
+                                    <option value="">-- SELECT ROLE --</option>
+                                    <option value="hod">HOD</option>
+                                    <option value="fbp">FBP</option>
+                                    <option value="ph">PH</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Manager SESA ID</td>
+                            <td style="width:60%">
+                                <input class="form-control" name="manager_sesa_id" id="manager_sesa_id" style="width:100%" required />
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="text-end">
+                        <div class="form-group">
+                            <button class="btn btn-success" name="btn_submit"><i class="fas fa-paper-plane"></i> Submit</button>
+                        </div>
+                    </div>
+
+                </form>
+                <br />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_edituser" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:50%">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-edit"></i> Update User</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form enctype="multipart/form-data" id="form_edit_user">
+                    <table class="table table-sm">
+                        <tr>
+                            <td class="align-middle">SESA ID</td>
+                            <td style="width:60%">
+                                <input class="form-control" name="e_sesa_id" id="e_sesa_id" style="width:100%" required readonly />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Name</td>
+                            <td style="width:60%">
+                                <input class="form-control" name="e_name" id="e_name" style="width:100%" required />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Email</td>
+                            <td style="width:60%">
+                                <input class="form-control" name="e_email" id="e_email" style="width:100%" required />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Department</td>
+                            <td>
+                                <select class="form-control" name="e_department" style="width:100%" id="e_department" required>
+                                    <option value="">-- SELECT DEPARTMENT --</option>
+                                    @foreach (string dept in deptList)
+                                    {
+                                        <option value="@dept">@dept</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Plant</td>
+                            <td>
+                                <select class="form-control" name="e_plant" id="e_plant" style="width:100%" required>
+                                    <option value="">-- SELECT PLANT --</option>
+                                    @foreach (string plant in plantList)
+                                    {
+                                        <option value="@plant">@plant</option>
+                                    }
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Level</td>
+                            <td>
+                                <select class="form-control" name="e_level" id="e_level" style="width:100%" required>
+                                    <option value="">-- SELECT LEVEL --</option>
+                                    <option value="admin">Admin</option>
+                                    <option value="requestor">Requestor</option>
+                                    <option value="finance">Finance</option>
+                                    <option value="approver">Approver</option>
+                                    <option value="security">Security</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Role</td>
+                            <td>
+                                <select class="form-control" name="e_role" id="e_role" style="width:100%" disabled>
+                                    <option value="">-- SELECT ROLE --</option>
+                                    <option value="hod">HOD</option>
+                                    <option value="fbp">FBP</option>
+                                    <option value="ph">PH</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">Manager SESA ID</td>
+                            <td style="width:60%">
+                                <input class="form-control" name="e_manager_sesa_id" id="e_manager_sesa_id" style="width:100%" />
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="text-end">
+                        <div class="form-group">
+                            <button class="btn btn-success" name="btn_submit"><i class="fas fa-paper-plane"></i> Submit</button>
+                        </div>
+                    </div>
+
+                </form>
+                <br />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_delegateuser" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:50%">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-user-plus"></i> Delegate Approver</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form enctype="multipart/form-data" id="form_delegate_user">
+                    <input type="hidden" name="original_sesa_id" id="original_sesa_id" />
+                    <table class="table table-striped">
+                        <tr>
+                            <td class="align-middle">Original Approver</td>
+                            <td style="width:60%">
+                                <input class="form-control" name="original_approver_name" id="original_approver_name" style="width:100%" readonly />
+                            </td>
+                        </tr>
+                        <tr id="row_current_delegation" style="display:none;">
+                            <td class="align-middle">Current Delegation</td>
+                            <td style="width:60%">
+                                <input class="form-control" id="current_delegated_name" style="width:100%" readonly />
+                                <button type="button" class="btn btn-sm btn-danger mt-2" id="btn_remove_delegation">
+                                    <i class="fas fa-times"></i> Remove Current Delegation
+                                </button>
+                            </td>
+                        </tr>
+                        <tr id="row_delegate_to" style="display:none;">
+                            <td class="align-middle">Delegate To</td>
+                            <td>
+                                <select class="form-control" name="delegated_to" id="delegated_to" style="width:100%" required>
+                                    <option value="">-- SELECT APPROVER --</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="text-end">
+                        <div class="form-group">
+                            <button class="btn btn-info" name="btn_submit" id="btn_set_delegation" style="display:none;">
+                                <i class="fas fa-paper-plane"></i> Set Delegation
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <br />
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        var table;
+        var loading = "<div class='text-center'><i class='fa fa-4x fa-spinner fa-spin'></i></div>";
+
+        $(document).ready(function () {
+            $('#e_department').select2({
+                dropdownParent: $('#modal_edituser'),
+                placeholder: "-- SELECT DEPARTMENT --",
+                allowClear: true
+            });
+
+            $('#e_plant').select2({
+                dropdownParent: $('#modal_edituser'),
+                placeholder: "-- SELECT PLANT --",
+                allowClear: true
+            });
+
+            $('#e_level').select2({
+                dropdownParent: $('#modal_edituser'),
+                placeholder: "-- SELECT LEVEL --",
+                allowClear: true
+            });
+
+            $('#e_role').select2({
+                dropdownParent: $('#modal_edituser'),
+                placeholder: "-- SELECT ROLE --",
+                allowClear: true
+            });
+
+            function setRoleOptions($select, level) {
+                $select.empty();
+                $select.append($('<option>', { value: '', text: '-- SELECT ROLE --' }));
+                if (level === 'approver') {
+                    $select.append($('<option>', { value: 'hod', text: 'HOD' }));
+                    $select.append($('<option>', { value: 'fbp', text: 'FBP' }));
+                    $select.append($('<option>', { value: 'ph', text: 'PH' }));
+                    $select.prop('disabled', false);
+                } else if (level === 'requestor') {
+                    $select.append($('<option>', { value: 'shipping', text: 'Shipping' }));
+                    $select.prop('disabled', false);
+                } else {
+                    $select.prop('disabled', true);
+                }
+                $select.val('').trigger('change');
+            }
+
+            $('#e_level').change(function () {
+                setRoleOptions($('#e_role'), $(this).val());
+            });
+
+            $('#department').select2({
+                dropdownParent: $('#modal_adduser'),
+                placeholder: "-- SELECT DEPARTMENT --",
+                allowClear: true
+            });
+
+            $('#plant').select2({
+                dropdownParent: $('#modal_adduser'),
+                placeholder: "-- SELECT PLANT --",
+                allowClear: true
+            });
+
+            $('#level').select2({
+                dropdownParent: $('#modal_adduser'),
+                placeholder: "-- SELECT LEVEL --",
+                allowClear: true
+            });
+
+            $('#role').select2({
+                dropdownParent: $('#modal_adduser'),
+                placeholder: "-- SELECT ROLE --",
+                allowClear: true
+            });
+
+            $('#level').change(function () {
+                setRoleOptions($('#role'), $(this).val());
+            });
+
+            $('#delegated_to').select2({
+                dropdownParent: $('#modal_delegateuser'),
+                placeholder: "-- SELECT APPROVER --",
+                allowClear: true,
+                ajax: {
+                    url: "@Url.Action("GetApproverList", "Admin")",
+                    dataType: 'json',
+                    delay: 250,
+                    data: function (params) {
+                        return {
+                            search: params.term || '',
+                            page: params.page || 1,
+                            excludeSesaId: $('#original_sesa_id').val()
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.map(function(item) {
+                                return {
+                                    id: item.sesa_id,
+                                    text: item.sesa_id + ' - ' + item.name
+                                };
+                            })
+                        };
+                    },
+                    cache: false
+                },
+                minimumInputLength: 0
+            });
+
+            $('#btn_remove_delegation').on('click', function() {
+                var originalSesaId = $('#original_sesa_id').val();
+
+                Swal.fire({
+                    title: 'Remove Delegation?',
+                    text: "Are you sure you want to remove the current delegation?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, Remove!',
+                    cancelButtonText: 'Cancel'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        $.ajax({
+                            url: "@Url.Action("RemoveDelegation", "Admin")",
+                            type: 'POST',
+                            data: { sesa_id: originalSesaId },
+                            success: function(response) {
+                                let arr = response.split(";");
+                                if (arr[0] === "success") {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Delegation Removed!',
+                                        html: arr[1]
+                                    }).then(function() {
+                                        loadDelegationInfo(originalSesaId);
+                                        table.ajax.reload(null, false);
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error!',
+                                        html: arr[1]
+                                    });
+                                }
+                            },
+                            error: function(xhr, status, error) {
+                                Swal.fire("Error", "Failed to remove delegation: " + error, "error");
+                            }
+                        });
+                    }
+                });
+            });
+
+            table = $("#table_users").DataTable({
+                "processing": true,
+                "serverSide": true,
+                "filter": true,
+                "searching": true,
+                "scrollX": true,
+                "autoWidth": false,
+                "ajax": {
+                    "url": "@Url.Action("GetUserList")",
+                    "type": "POST",
+                    "datatype": "json"
+                },
+                "columns": [
+                    { "data": "sesa_id", "className": "align-middle"},
+                    { "data": "name", "className": "align-middle" },
+                    { "data": "email", "className": "align-middle" },
+                    { "data": "department", "className": "align-middle" },
+                    { "data": "plant", "className": "align-middle" },
+                    { "data": "level", "className": "align-middle" },
+                    { "data": "role", "className": "align-middle" },
+                    {
+                        "data": "id_user",
+                        "className": "text-center",
+                        "render": function (data, type, row) {
+                            let buttons = `
+                                <button class="btn btn-sm btn-primary btn-update" onclick='update_user("${data}")'><i class='fas fa-pencil-alt'></i></button>
+                                <button class="btn btn-sm btn-danger btn-delete" onclick='delete_user("${data}", "${row.name}")'><i class='fas fa-trash-alt'></i></button>
+                            `;
+
+                            if (row.level === 'approver') {
+                                buttons += `<button class="btn btn-sm btn-info btn-delegate" onclick='delegate_user("${data}", "${row.sesa_id}", "${row.name}")' title="Delegate Approver"><i class='fas fa-user-plus'></i></button>`;
+                            }
+
+                            return buttons;
+                        }
+                    },
+                ],
+                "order": [[0,"asc"]],
+                "initComplete": function(settings, json) {
+                    var wrapper = $('#table_users').closest('.dataTables_wrapper');
+                    $('a[name=btn-upload]').appendTo(wrapper).css('display', 'block');
+
+                    $('a[name=btn-upload]').css({
+                        'position': 'absolute',
+                        'top': '0px',
+                        'right': '255px'
+                    });
+                }
+            });
+        });
+
+        function add_user() {
+            $('#modal_adduser').modal('show');
+        }
+
+        function update_user(id_user) {
+            $.ajax({
+                url: "@Url.Action("GET_DETAIL_USER", "Admin")",
+                type: 'GET',
+                data: { id_user: id_user },
+                success: function (data) {
+                    $('#e_sesa_id').val(data.sesa_id);
+                    $('#e_name').val(data.name);
+                    $('#e_email').val(data.email);
+                    $('#e_department').val(data.department).trigger('change');
+                    $('#e_plant').val(data.plant).trigger('change');
+                    $('#e_level').val(data.level).trigger('change');
+
+                    if (data.role) {
+                        $('#e_role').val(data.role).trigger('change');
+                    } else {
+                        $('#e_role').val(null).trigger('change');
+                    }
+
+                    $('#e_manager_sesa_id').val(data.manager_sesa_id);
+                    $('#modal_edituser').modal('show');
+                },
+                error: function (error) {
+                    console.error('Error fetching user data:', error);
+                }
+            });
+        }
+
+        function delete_user(id_user, name) {
+            Swal.fire({
+                title: 'Are you sure?',
+                html: `Are you sure you want to delete <b>${name}</b>? This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: "@Url.Action("DELETE_USER", "Admin")",
+                        type: 'POST',
+                        data: { id_user: id_user },
+                        success: function (response) {
+                            if (response > 0) {
+                                Swal.fire(
+                                    'Deleted!',
+                                    'The user has been deleted successfully.',
+                                    'success'
+                                ).then(() => {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire(
+                                    'Error!',
+                                    'There was a problem deleting the user.',
+                                    'error'
+                                );
+                            }
+                        },
+                        error: function (xhr, status, error) {
+                            Swal.fire(
+                                'Error!',
+                                `An error occurred: ${error}`,
+                                'error'
+                            );
+                        }
+                    });
+                }
+            });
+        }
+
+        function delegate_user(id_user, sesa_id, name) {
+            $('#original_sesa_id').val(sesa_id);
+            $('#original_approver_name').val(sesa_id + ' - ' + name);
+            loadDelegationInfo(sesa_id);
+            $('#modal_delegateuser').modal('show');
+        }
+
+        function loadDelegationInfo(sesaId) {
+            $.ajax({
+                url: "@Url.Action("GetUserDelegationInfo", "Admin")",
+                type: 'GET',
+                data: { sesa_id: sesaId },
+                success: function(data) {
+                    if (data.delegated_to && data.delegated_to !== "") {
+                        $('#current_delegated_name').val(data.delegated_to + ' - ' + data.delegated_name);
+                        $('#row_current_delegation').show();
+                        $('#row_delegate_to').hide();
+                        $('#btn_set_delegation').hide();
+
+                        $('#delegated_to').val(null).trigger('change');
+                    } else {
+                        $('#row_current_delegation').hide();
+                        $('#row_delegate_to').show();
+                        $('#btn_set_delegation').show();
+
+                        $('#delegated_to').prop('disabled', false).val(null).trigger('change');
+                    }
+                },
+                error: function(error) {
+                    console.error('Error loading delegation info:', error);
+                    $('#row_current_delegation').hide();
+                    $('#row_delegate_to').show();
+                    $('#btn_set_delegation').show();
+                    $('#delegated_to').prop('disabled', false).val(null).trigger('change');
+                }
+            });
+        }
+
+        $("form#form_add_user").submit(function (e) {
+            e.preventDefault();
+            let formData = new FormData(this);
+            Swal.fire({
+                title: 'Confirm',
+                text: "Are you sure?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#dc3545',
+                confirmButtonText: 'Yes!',
+                cancelButtonText: 'No!',
+                showLoaderOnConfirm: true,
+                preConfirm: function () {
+                    return new Promise(function (resolve, reject) {
+                        $.ajax({
+                            url: "@Url.Action("ADD_NEW_USER", "Admin")",
+                            type: 'POST',
+                            data: formData,
+                            cache: false,
+                            contentType: false,
+                            processData: false
+                        }).done(function (res) {
+                            let arr = res.split(";");
+                            if (arr[0] === "success") {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Done!!',
+                                    html: arr[1]
+                                }).then(function () {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!!',
+                                    html: arr[1],
+                                    width: 800
+                                });
+                            }
+                        }).fail(function (err) {
+                            Swal.fire("Error", "Upload Failed -> " + err, "error");
+                        });
+                    });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            });
+        });
+
+        $("form#form_edit_user").submit(function (e) {
+            e.preventDefault();
+            let formData = new FormData(this);
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
+
+            Swal.fire({
+                title: 'Confirm',
+                text: "Are you sure?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                cancelButtonColor: '#dc3545',
+                confirmButtonText: 'Yes!',
+                cancelButtonText: 'No!',
+                showLoaderOnConfirm: true,
+                preConfirm: function () {
+                    return new Promise(function (resolve, reject) {
+                        $.ajax({
+                            url: "@Url.Action("UPDATE_USER", "Admin")",
+                            type: 'POST',
+                            data: formData,
+                            cache: false,
+                            contentType: false,
+                            processData: false
+                        }).done(function (res) {
+                            let arr = res.split(";");
+                            if (arr[0] == "success") {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Done!!',
+                                    html: arr[2]
+                                }).then(function () {
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!!',
+                                    html: res,
+                                    width: 800
+                                });
+                            }
+                        }).fail(function (err) {
+                            Swal.fire("Error", "Upload Failed -> " + err, "error");
+                        });
+                    });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            });
+        });
+
+        $("form#form_delegate_user").submit(function (e) {
+            e.preventDefault();
+
+            if ($('#row_delegate_to').is(':hidden')) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Active Delegation',
+                    text: 'There is already an active delegation. Remove it first if you want to set a new one.'
+                });
+                return;
+            }
+
+            let formData = new FormData(this);
+
+            Swal.fire({
+                title: 'Confirm Delegation',
+                text: "Are you sure you want to set this delegation?",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#17a2b8',
+                cancelButtonColor: '#dc3545',
+                confirmButtonText: 'Yes, Set Delegation!',
+                cancelButtonText: 'Cancel',
+                showLoaderOnConfirm: true,
+                preConfirm: function () {
+                    return new Promise(function (resolve, reject) {
+                        $.ajax({
+                            url: "@Url.Action("SetDelegation", "Admin")",
+                            type: 'POST',
+                            data: formData,
+                            cache: false,
+                            contentType: false,
+                            processData: false
+                        }).done(function (res) {
+                            let arr = res.split(";");
+                            if (arr[0] === "success") {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Delegation Set!',
+                                    html: arr[1]
+                                }).then(function () {
+                                    $('#modal_delegateuser').modal('hide');
+                                    table.ajax.reload(null, false);
+                                });
+                            } else {
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'Error!',
+                                    html: arr[1],
+                                    width: 800
+                                });
+                            }
+                        }).fail(function (err) {
+                            Swal.fire("Error", "Failed to set delegation: " + err, "error");
+                        });
+                    });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            });
+        });
+    </script>
+}

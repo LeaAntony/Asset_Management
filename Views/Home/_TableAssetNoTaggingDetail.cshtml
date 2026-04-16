@@ -1,0 +1,113 @@
+﻿@using System.Globalization;
+@using Microsoft.AspNetCore.Http;
+@using Asset_Management.Controllers;
+@using Asset_Management.Function;
+@model List<TableModel>
+@{
+}
+<style>
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+
+    @@media screen and (max-width: 768px) {
+        .modal-body {
+            padding: 16px;
+        }
+
+        .professional-table {
+            font-size: 11px;
+        }
+
+            .professional-table thead th {
+                padding: 12px 8px;
+                font-size: 10px;
+            }
+
+            .professional-table tbody td {
+                padding: 8px;
+            }
+    }
+
+    @@media screen and (max-width: 576px) {
+        .modal-header {
+            padding: 16px 20px 12px;
+        }
+
+            .modal-header .modal-title {
+                font-size: 16px;
+            }
+
+        .modal-body {
+            padding: 12px;
+        }
+
+        .professional-table {
+            font-size: 10px;
+        }
+
+            .professional-table thead th {
+                padding: 8px 6px;
+                font-size: 9px;
+            }
+
+            .professional-table tbody td {
+                padding: 6px;
+            }
+    }
+</style>
+<div class="modal-header">
+    <h5 class="modal-title"><i class="fas fa-list"></i> Department Asset No Tagging</h5>
+    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-12 table-responsive">
+            <table class="table table-sm professional-table align-center nowrap" id="table_asset_no_tagging_detail">
+                <thead>
+                    <tr>
+                        <th>Department</th>
+                        <th>Total Asset</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model)
+                    {
+                        <tr>
+                            <td>@row.label</td>
+                            <td class="text-right"><strong>@row.value</strong></td>
+                            <td class="text-center">
+                                <button class="btn btn-outline-info btn-sm" onclick="open_asset_no_tagging_detail('@row.label')">
+                                    <i class="fas fa-info-circle"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+    function open_asset_no_tagging_detail(department) {
+        $.ajax({
+            type: "GET",
+            url: "@Url.Action("GetAssetNoTaggingByDepartment")",
+            data: { department: department }
+        }).done(function (res) {
+            $("div#body_asset").html(res);
+            $("div#modal_asset").modal("show");
+        });
+    }
+
+    $("table#table_asset_no_tagging_detail").DataTable({
+        order: [[1,"desc"]],
+        columnDefs: [
+            { orderable: false, targets: 2 }
+        ]
+    });
+</script>

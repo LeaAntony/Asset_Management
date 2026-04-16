@@ -1,0 +1,691 @@
+﻿@using System.Globalization;
+@using Microsoft.AspNetCore.Http;
+@using Asset_Management.Controllers;
+@using Asset_Management.Function;
+@model List<GatePassModel>
+@{
+    List<GatePassModel> appList = ViewBag.appList;
+    List<GatePassModel> disList = ViewBag.disList;
+    List<ProformaFileModel> financeFiles = ViewBag.financeFiles ?? new List<ProformaFileModel>();
+    decimal totalApc = ViewBag.totalApc ?? 0;
+
+    var dis = disList.First();
+    var firstDetail = Model.FirstOrDefault();
+    bool hasProforma = firstDetail?.id_proforma != null;
+    bool showProformaFiles = hasProforma && totalApc > 2500;
+    bool showFinanceFiles = hasProforma && (firstDetail?.proforma_fin_status == "SHIPPING" || firstDetail?.proforma_fin_status == "CLOSED");
+    bool showPebFiles = hasProforma && firstDetail?.proforma_fin_status == "CLOSED" && !string.IsNullOrEmpty(firstDetail?.file_peb);
+    bool showShippingDetails = hasProforma && firstDetail?.shipping_status == "CLOSED";
+
+    bool hasCourierCharges = !string.IsNullOrEmpty(firstDetail?.courier_charges) && firstDetail?.courier_charges != "0";
+    bool hasCourierName = !string.IsNullOrEmpty(firstDetail?.courier_name);
+    bool hasCourierAccount = !string.IsNullOrEmpty(firstDetail?.courier_account_no);
+    bool hasFreightCharges = !string.IsNullOrEmpty(firstDetail?.freight_charges) && firstDetail?.freight_charges != "0";
+    bool hasIncoterms = !string.IsNullOrEmpty(firstDetail?.incoterms) && firstDetail?.incoterms != "0";
+}
+<style>
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+
+    @@media screen and (max-width: 768px) {
+        .modal-body {
+            padding: 16px;
+        }
+
+        .professional-table {
+            font-size: 11px;
+        }
+
+            .professional-table thead th {
+                padding: 12px 8px;
+                font-size: 10px;
+            }
+
+            .professional-table tbody td {
+                padding: 8px;
+            }
+    }
+
+    @@media screen and (max-width: 576px) {
+        .modal-header {
+            padding: 16px 20px 12px;
+        }
+
+            .modal-header .modal-title {
+                font-size: 16px;
+            }
+
+        .modal-body {
+            padding: 12px;
+        }
+
+        .professional-table {
+            font-size: 10px;
+        }
+
+            .professional-table thead th {
+                padding: 8px 6px;
+                font-size: 9px;
+            }
+
+            .professional-table tbody td {
+                padding: 6px;
+            }
+    }
+
+    table#table_gatepass_detail th, table#table_gatepass_detail th {
+        vertical-align: middle;
+    }
+
+    .detail-card {
+        border: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+        height: 100%;
+        width: 100%
+    }
+
+        .detail-card .card-header {
+            background: var(--primary-blue);
+            color: white;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            padding: 12px 16px;
+        }
+
+        .detail-card .card-body {
+            padding: 20px;
+        }
+
+    .file-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+    .file-type {
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    .file-link {
+        text-decoration: none;
+    }
+
+        .file-link:hover {
+            text-decoration: underline;
+        }
+
+    .proforma-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 15px;
+    }
+
+    .proforma-item {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .proforma-label {
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 4px;
+        font-size: 0.9em;
+    }
+
+    .proforma-value {
+        color: var(--text-dark);
+        margin: 0;
+    }
+
+    .approval-container {
+        padding: 6px 4px 0;
+    }
+
+    .approval-steps {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 8px;
+        list-style: none;
+        margin: 0 0 12px 0;
+        padding: 0 6px;
+    }
+
+    .approval-step {
+        position: relative;
+        flex: 1 1 0;
+        text-align: center;
+        min-width: 0;
+    }
+
+        .approval-step:not(:first-child)::before {
+            content: '';
+            position: absolute;
+            top: 36px;
+            left: -50%;
+            width: 100%;
+            height: 4px;
+            background: #e9ecef;
+            z-index: 0;
+            border-radius: 2px;
+        }
+
+        .approval-step.approved:not(:first-child)::before {
+            background: var(--success);
+        }
+
+        .approval-step.rejected:not(:first-child)::before {
+            background: var(--danger);
+        }
+
+        .approval-step .status {
+            margin-bottom: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 4px;
+        }
+
+        .approval-step.approved .status {
+            color: var(--success);
+        }
+
+        .approval-step.rejected .status {
+            color: var(--danger);
+        }
+
+        .approval-step.cancelled .status {
+            color: #6c757d;
+        }
+
+        .approval-step .circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #adb5bd;
+            color: #fff;
+            border: 3px solid #adb5bd;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            z-index: 1;
+            position: relative;
+            box-shadow: 0 0 0 2px #fff inset;
+        }
+
+        .approval-step.approved .circle {
+            background: var(--success);
+            border-color: var(--success);
+        }
+
+        .approval-step.rejected .circle {
+            background: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .approval-step.pending .circle {
+            background: #adb5bd;
+            border-color: #adb5bd;
+        }
+
+        .approval-step.cancelled .circle {
+            background: #6c757d;
+            border-color: #6c757d;
+        }
+
+        .approval-step .label {
+            margin-top: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dark);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 4px;
+        }
+
+        .approval-step .date {
+            font-size: 11px;
+            color: var(--text-light);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 4px;
+        }
+
+    .remark-box {
+        white-space: pre-wrap;
+        word-break: break-word;
+    }
+</style>
+
+<div class="modal-header">
+    <h5 class="modal-title"><i class="fa fa-info-circle"></i> Detail Gate Pass</h5>
+    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+<div class="modal-body">
+    @if (appList != null && appList.Any())
+    {
+        <div class="approval-container">
+            <ol class="approval-steps">
+                @for (int i = 0; i < appList.Count; i++)
+                {
+                    var app = appList[i];
+                    var status = (app.approval_status ?? "").Trim().ToUpperInvariant();
+                    var stepClass = status == "APPROVED" ? "approved"
+                    : status == "REJECTED" ? "rejected"
+                    : "pending";
+                    bool hasRejectedBefore = appList.Take(i).Any(a => (a.approval_status ?? "").Trim().ToUpperInvariant() == "REJECTED");
+                    var tipStatus = hasRejectedBefore && (string.IsNullOrWhiteSpace(app.approval_status) || app.approval_status == "-" || status == "OPEN") ? "CANCELLED" : (string.IsNullOrWhiteSpace(app.approval_status) || app.approval_status == "-" || status == "OPEN" ? "PENDING" : app.approval_status);
+                    if (tipStatus == "CANCELLED")
+                    {
+                        stepClass = "cancelled";
+                    }
+                    var remarkTip = string.IsNullOrWhiteSpace(app.remark) ? "" : app.remark.Replace("\n", "<br/>");
+                    <li class="approval-step @stepClass" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-html="true" title="@remarkTip">
+                        <div class="status">@tipStatus</div>
+                        <div class="circle">@(hasRejectedBefore ? "-" : (i + 1))</div>
+                        <div class="label">@Html.Raw(app.approver)</div>
+                        <div class="date">@app.date_approval</div>
+                    </li>
+                }
+            </ol>
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-3">
+            <label>Gate Pass ID :</label>
+            <p>@dis.gatepass_no</p>
+
+            <label>Category :</label>
+            <p>
+                @dis.category @if (dis.category == "FA SALES - WITHOUT DISMANTLING")
+                {
+                    @("( " + dis.type + " )")
+                }
+            </p>
+
+            @if (dis.category == "TRANSFER PLANT TO PLANT" || dis.category == "TRANSFER INSIDE PLANT")
+            {
+                <label>New PIC Name :</label>
+                <p>@dis.new_pic_name</p>
+            }
+        </div>
+
+        <div class="col-3">
+            <label>Date of Gate Pass :</label>
+            <p>@dis.create_date</p>
+
+            <label>Requested by :</label>
+            <p>@dis.created_by</p>
+
+            @if (dis.type == "EMPLOYEE")
+            {
+                <label>Employee Name:</label>
+                <p>@dis.employee_name</p>
+            }
+            @if (dis.type == "CSR")
+            {
+                <label>Donation To:</label>
+                <p>@dis.csr_to</p>
+            }
+            @if (dis.category == "REPAIR TO VENDOR")
+            {
+                <label>Est.Return Date :</label>
+                <p>@dis.return_date</p>
+            }
+            @if (dis.category == "TRANSFER PLANT TO PLANT")
+            {
+                <label>New Location :</label>
+                <p>@dis.location</p>
+            }
+        </div>
+
+        <div class="col-6">
+            <label>Remark:</label>
+            <textarea class="form-control" readonly rows="4" style="resize: none; border: 1px solid #ccc; background-color: #f8f9fa;">@dis.remark</textarea>
+        </div>
+    </div>
+
+    <div class="row mt-3">
+        <div class="col-12">
+            <h6><i class="fas fa-list"></i> Asset Details (Total APC: $@totalApc.ToString("N2"))</h6>
+        </div>
+        <div class="col-12 table-responsive">
+            <table class="table professional-table align-center nowrap" id="table_gatepass_detail" style="font-size:10pt">
+                <thead style="background: var(--primary-blue); color: white; font-weight: 600;">
+                    <tr>
+                        <th>Asset No</th>
+                        <th>Subnumber</th>
+                        <th>Description</th>
+                        <th>Asset Class</th>
+                        <th>Cost Center</th>
+                        <th>Capitalized on</th>
+                        @if (hasProforma)
+                        {
+                            <th>Box No</th>
+                        }
+                        @if (@dis.category == "TRANSFER TO VENDOR" || @dis.category == "REPAIR TO VENDOR")
+                        {
+                            <th>HS Code</th>
+                        }
+                        @if (@dis.category == "TRANSFER INSIDE PLANT" || @dis.category == "TRANSFER PLANT TO PLANT")
+                        {
+                            <th>New Location</th>
+                        }
+                        @if (@dis.category == "REPAIR TO VENDOR")
+                        {
+                            <th>Return Date</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model)
+                    {
+                        <tr>
+                            <td class="text-right">@row.asset_no</td>
+                            <td class="text-right">@row.asset_subnumber</td>
+                            <td>@(row.asset_desc ?? "Asset Disposed")</td>
+                            <td class="text-right">@(row.asset_class ?? "Asset Disposed")</td>
+                            <td class="text-right">@(row.cost_center ?? "Asset Disposed")</td>
+                            <td class="text-center">@(row.capitalized_on ?? "Asset Disposed")</td>
+                            @if (hasProforma)
+                            {
+                                <td>@(row.box_no ?? "-")</td>
+                            }
+                            @if (@dis.category == "TRANSFER TO VENDOR" || @dis.category == "REPAIR TO VENDOR")
+                            {
+                                <td>@(row.hs_code?.ToString() ?? "-")</td>
+                            }
+                            @if (@row.category == "TRANSFER INSIDE PLANT" || @row.category == "TRANSFER PLANT TO PLANT")
+                            {
+                                <td>@row.naming_output</td>
+                            }
+                            @if (@dis.category == "REPAIR TO VENDOR")
+                            {
+                                <td>@row.actual_return_date</td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    @if (dis.type == "CSR" || dis.type == "VENDOR")
+    {
+        if (!string.IsNullOrEmpty(firstDetail?.supporting_documents))
+        {
+            <div class="card detail-card mt-2">
+                <div class="card-header">
+                    <h6 class="mb-0"><i class="fas fa-paperclip"></i> Supporting Documents</h6>
+                </div>
+                <div class="card-body">
+                    @foreach (var file in firstDetail.supporting_documents.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        <div class="file-item">
+                            <span class="file-type">Supporting Document</span>
+                            <a href="~/Upload/Gatepass_Fa_Sales/@file.Trim()" target="_blank" class="btn btn-sm btn-outline-primary file-link">
+                                <i class="fas fa-download"></i> @file.Trim()
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+
+    @if (hasProforma)
+    {
+        <div class="card detail-card mt-2">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-file-invoice"></i> Proforma Details</h6>
+            </div>
+            <div class="card-body">
+                <div class="proforma-grid">
+                    <div class="proforma-item">
+                        <div class="proforma-label">Proforma No</div>
+                        <p class="proforma-value">@(string.IsNullOrEmpty(firstDetail.proforma_no) ? "N/A" : firstDetail.proforma_no)</p>
+                    </div>
+                    <div class="proforma-item">
+                        <div class="proforma-label">Attention To</div>
+                        <p class="proforma-value">@firstDetail.attn_to</p>
+                    </div>
+                    <div class="proforma-item">
+                        <div class="proforma-label">Street</div>
+                        <p class="proforma-value">@firstDetail.street</p>
+                    </div>
+                    <div class="proforma-item">
+                        <div class="proforma-label">City</div>
+                        <p class="proforma-value">@firstDetail.city</p>
+                    </div>
+                    <div class="proforma-item">
+                        <div class="proforma-label">Country</div>
+                        <p class="proforma-value">@firstDetail.country</p>
+                    </div>
+                    <div class="proforma-item">
+                        <div class="proforma-label">Postal Code</div>
+                        <p class="proforma-value">@firstDetail.postal_code</p>
+                    </div>
+                    <div class="proforma-item">
+                        <div class="proforma-label">Phone</div>
+                        <p class="proforma-value">@firstDetail.phone_no</p>
+                    </div>
+                    <div class="proforma-item">
+                        <div class="proforma-label">Email</div>
+                        <p class="proforma-value">@firstDetail.email</p>
+                    </div>
+                    <div class="proforma-item">
+                        <div class="proforma-label">COO</div>
+                        <p class="proforma-value">@(string.IsNullOrEmpty(firstDetail.coo) ? "N/A" : firstDetail.coo)</p>
+                    </div>
+                    <div class="proforma-item">
+                        <div class="proforma-label">Ship Mode</div>
+                        <p class="proforma-value">@firstDetail.ship_mode</p>
+                    </div>
+                    @if (hasCourierCharges)
+                    {
+                        <div class="proforma-item">
+                            <div class="proforma-label">Courier Charges</div>
+                            <p class="proforma-value">@firstDetail.courier_charges</p>
+                        </div>
+                    }
+                    @if (hasCourierName)
+                    {
+                        <div class="proforma-item">
+                            <div class="proforma-label">Courier Name</div>
+                            <p class="proforma-value">@firstDetail.courier_name</p>
+                        </div>
+                    }
+                    @if (hasCourierAccount)
+                    {
+                        <div class="proforma-item">
+                            <div class="proforma-label">Courier Account</div>
+                            <p class="proforma-value">@firstDetail.courier_account_no</p>
+                        </div>
+                    }
+                    @if (hasFreightCharges)
+                    {
+                        <div class="proforma-item">
+                            <div class="proforma-label">Freight Charges</div>
+                            <p class="proforma-value">@firstDetail.freight_charges</p>
+                        </div>
+                    }
+                    @if (hasIncoterms)
+                    {
+                        <div class="proforma-item">
+                            <div class="proforma-label">Incoterms</div>
+                            <p class="proforma-value">@firstDetail.incoterms</p>
+                        </div>
+                    }
+                    <div class="proforma-item">
+                        <div class="proforma-label">Invoice Payment</div>
+                        <p class="proforma-value">@firstDetail.invoice_payment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+
+    @if (showProformaFiles || (showFinanceFiles && financeFiles.Any()))
+    {
+        <div class="row mb-2">
+            <div class="@(showFinanceFiles ? "col-6" : "col-12")">
+                @if (showProformaFiles)
+                {
+                    <div class="card detail-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-paperclip"></i> Proforma Files</h6>
+                        </div>
+                        <div class="card-body">
+                            @if (!string.IsNullOrEmpty(firstDetail.file_attach))
+                            {
+                                <div class="file-item">
+                                    <span class="file-type">Main Attachment</span>
+                                    <a href="~/Upload/Proforma/@firstDetail.file_attach" target="_blank" class="btn btn-sm btn-outline-primary file-link">
+                                        <i class="fas fa-download"></i> @firstDetail.file_attach
+                                    </a>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(firstDetail.file_support))
+                            {
+                                @foreach (var supportFile in firstDetail.file_support.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                                {
+                                    <div class="file-item">
+                                        <span class="file-type">Supporting File</span>
+                                        <a href="~/Upload/Proforma/@supportFile" target="_blank" class="btn btn-sm btn-outline-secondary file-link">
+                                            <i class="fas fa-download"></i> @supportFile
+                                        </a>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="@(showProformaFiles ? "col-6" : "col-12")">
+                @if (showFinanceFiles && financeFiles.Any())
+                {
+                    <div class="card detail-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-dollar-sign"></i> Finance Files</h6>
+                        </div>
+                        <div class="card-body">
+                            @foreach (var file in financeFiles)
+                            {
+                                <div class="file-item">
+                                    <div>
+                                        <span class="file-type">@file.document_type</span>
+                                        <small class="text-muted d-block">Uploaded: @file.record_date.ToString("dd MMM yyyy")</small>
+                                    </div>
+                                    <a href="~/Upload/Proforma_Finance/@file.filename" target="_blank" class="btn btn-sm btn-outline-primary file-link">
+                                        <i class="fas fa-download"></i> @file.filename
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @if (showShippingDetails || showPebFiles)
+    {
+        <div class="row">
+            <div class="@(showPebFiles ? "col-6" : "col-12")">
+                @if (showShippingDetails)
+                {
+                    <div class="card detail-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-shipping-fast"></i> Shipping Details</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="proforma-grid">
+                                <div class="proforma-item">
+                                    <div class="proforma-label">Plant</div>
+                                    <p class="proforma-value">@firstDetail.plant</p>
+                                </div>
+                                <div class="proforma-item">
+                                    <div class="proforma-label">DHL AWB</div>
+                                    <p class="proforma-value">@firstDetail.dhl_awb</p>
+                                </div>
+                                <div class="proforma-item">
+                                    <div class="proforma-label">Shipment Date</div>
+                                    <p class="proforma-value">@firstDetail.shipment_date</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="@(showShippingDetails ? "col-6" : "col-12")">
+                @if (showPebFiles)
+                {
+                    <div class="card detail-card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="fas fa-file-contract"></i> PEB Files</h6>
+                        </div>
+                        <div class="card-body">
+                            @foreach (var pebFile in firstDetail.file_peb.Split(';', StringSplitOptions.RemoveEmptyEntries))
+                            {
+                                <div class="file-item">
+                                    <span class="file-type">PEB Document</span>
+                                    <a href="~/Upload/PEB/@pebFile" target="_blank" class="btn btn-sm btn-outline-danger file-link">
+                                        <i class="fas fa-download"></i> @pebFile
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+<script>
+    $(function () {
+        const $tbl = $("#table_gatepass_detail");
+
+        const dt = $tbl.DataTable({
+            deferRender: true
+        });
+
+        const $modal = $tbl.closest(".modal");
+        $modal.on("shown.bs.modal", function () {
+            dt.columns.adjust();
+        });
+
+        dt.on("init.dt", function () {
+            dt.columns.adjust();
+        });
+    });
+
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl, {
+            html: true,
+            trigger: 'hover focus',
+            sanitize: false
+        });
+    });
+</script>

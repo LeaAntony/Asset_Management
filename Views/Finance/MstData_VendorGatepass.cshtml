@@ -1,0 +1,555 @@
+﻿@using Asset_Management.Models
+
+<style>
+    .hero {
+        min-height: 70px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        color: #fff;
+    }
+
+        .hero .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+        }
+
+        .hero .hero-body {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        .hero .hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+    .inner {
+        height: 70px;
+        position: relative;
+    }
+
+    .hero .inner {
+        background: rgba(0,0,0,0.7);
+    }
+
+    .professional-table {
+        font-size: 12px;
+        border-collapse: separate;
+        border-spacing: 0;
+        clip-path: inset(0 round 8px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+        .professional-table thead th {
+            background: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .professional-table tbody td {
+            border: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .professional-table tbody tr:hover {
+            background-color: var(--background-gray);
+        }
+
+        .professional-table th,
+        .professional-table td {
+            box-sizing: border-box;
+            white-space: nowrap;
+        }
+
+    .modal {
+        overflow: auto !important;
+    }
+
+    .custom-btn {
+        padding: 4px 7px;
+        font-size: 9pt;
+    }
+
+    .custom-add-btn {
+        float: right;
+        width: auto;
+        padding: 5px 10px;
+        margin-right: 10px;
+    }
+
+    .required {
+        color: red;
+    }
+</style>
+
+<section id="hero" class="hero bg-dark position-relative" style="background: url('@Url.Content("~/images/background/bg-am.jpg")') center center / cover no-repeat fixed;">
+    <div class="inner d-flex justify-content-between align-items-center px-3 py-2 w-100">
+
+        <div>
+        </div>
+
+        <div class="position-absolute top-50 start-50 translate-middle text-center">
+            <h3 class="text-white mb-0">
+                <i class="fa fa-table text-success"></i>
+                <b>Master Data Vendor Gatepass</b>
+            </h3>
+        </div>
+
+        <div class="ms-auto">
+        </div>
+
+    </div>
+</section>
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-12 mt-3">
+                <div class="list-card card fade-in">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <table class="table professional-table align-center nowrap" id="table_vendor_gatepass" style="font-size:8pt; width:100%">
+                                    <thead class="align-middle text-center" style="background: var(--primary-blue); color: white; font-weight: 600;">
+                                        <tr>
+                                            <th>Vendor Code</th>
+                                            <th>Vendor Name</th>
+                                            <th>Vendor Address</th>
+                                            <th>Vendor Postal Code</th>
+                                            <th>Vendor Location</th>
+                                            <th>Vendor Batam</th>
+                                            <th>Vendor Phone</th>
+                                            <th>Vendor Email</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button class="btn btn-success btn-circle btn-sm ml-auto text-white custom-add-btn" name="btn_add" style="display: none;"><i class="fa fa-plus"></i> Add Vendor Gatepass</button>
+
+<div id="modal_add" class="modal fade">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ADD VENDOR GATEPASS DATA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6 mt-3">
+                        <label>Vendor Code<span class="required">*</span></label>
+                        <input type="text" name="input_vendor_code" class="form-control" placeholder="INPUT VENDOR CODE" required />
+                    </div>
+                    <div class="col-md-6 mt-3">
+                        <label>Vendor Name<span class="required">*</span></label>
+                        <input type="text" name="input_vendor_name" class="form-control" placeholder="INPUT VENDOR NAME" required />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col mt-3">
+                        <label>Vendor Address<span class="required">*</span></label>
+                        <textarea name="input_vendor_address" class="form-control" rows="3" placeholder="INPUT VENDOR ADDRESS"></textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mt-3">
+                        <label>Vendor Postal Code<span class="required">*</span></label>
+                        <input type="text" name="input_vendor_postal_code" class="form-control" placeholder="INPUT VENDOR POSTAL CODE" />
+                    </div>
+                    <div class="col-md-6 mt-3">
+                        <label>Vendor Location<span class="required">*</span></label>
+                        <input type="text" name="input_vendor_location" class="form-control" placeholder="INPUT VENDOR LOCATION" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mt-3">
+                        <label>Vendor Batam<span class="required">*</span></label>
+                        <select class="form-control" name="input_vendor_batam" id="input_vendor_batam" required>
+                            <option value="">Select Vendor Batam</option>
+                            <option value="Batam">Batam</option>
+                            <option value="Non Batam">Non Batam</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mt-3">
+                        <label>Vendor Phone<span class="required">*</span></label>
+                        <input type="text" name="input_vendor_phone" class="form-control" placeholder="INPUT VENDOR PHONE" />
+                    </div>
+                    <div class="col-md-4 mt-3">
+                        <label>Vendor Email<span class="required">*</span></label>
+                        <input type="email" name="input_vendor_email" class="form-control" placeholder="INPUT VENDOR EMAIL" title="Please enter a valid email address" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div>
+                    <button class="btn btn-success btn-block" name="btn_adddata"><i class="fa fa-plus"></i> ADD</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_edit" class="modal fade">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">EDIT VENDOR GATEPASS DATA</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" name="edit_ID" class="form-control" disabled hidden />
+                <div class="row">
+                    <div class="col-md-6 mt-3">
+                        <label>Vendor Code<span class="required">*</span></label>
+                        <input type="text" name="edit_vendor_code" class="form-control" placeholder="INPUT VENDOR CODE" required readonly />
+                    </div>
+                    <div class="col-md-6 mt-3">
+                        <label>Vendor Name<span class="required">*</span></label>
+                        <input type="text" name="edit_vendor_name" class="form-control" placeholder="INPUT VENDOR NAME" required />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col mt-3">
+                        <label>Vendor Address<span class="required">*</span></label>
+                        <textarea name="edit_vendor_address" class="form-control" rows="3" placeholder="INPUT VENDOR ADDRESS"></textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6 mt-3">
+                        <label>Vendor Postal Code<span class="required">*</span></label>
+                        <input type="text" name="edit_vendor_postal_code" class="form-control" placeholder="INPUT VENDOR POSTAL CODE" />
+                    </div>
+                    <div class="col-md-6 mt-3">
+                        <label>Vendor Location<span class="required">*</span></label>
+                        <input type="text" name="edit_vendor_location" class="form-control" placeholder="INPUT VENDOR LOCATION" />
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4 mt-3">
+                        <label>Vendor Batam<span class="required">*</span></label>
+                        <select class="form-control" name="edit_vendor_batam" id="edit_vendor_batam" required>
+                            <option value="">Select Vendor Batam</option>
+                            <option value="Batam">Batam</option>
+                            <option value="Non Batam">Non Batam</option>
+                        </select>
+                    </div>
+                    <div class="col-md-4 mt-3">
+                        <label>Vendor Phone<span class="required">*</span></label>
+                        <input type="text" name="edit_vendor_phone" class="form-control" placeholder="INPUT VENDOR PHONE" />
+                    </div>
+                    <div class="col-md-4 mt-3">
+                        <label>Vendor Email<span class="required">*</span></label>
+                        <input type="email" name="edit_vendor_email" class="form-control" placeholder="INPUT VENDOR EMAIL" title="Please enter a valid email address" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div>
+                    <button class="btn btn-success btn-block" name="btn_editdata"><i class="fa fa-check"></i> CONFIRM</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script>
+        var table;
+
+        $(document).ready(function () {
+            table = $("#table_vendor_gatepass").DataTable({
+                "processing": true,
+                "serverSide": true,
+                "filter": true,
+                "ajax": {
+                    "url": "@Url.Action("GetVendorGatepassList")",
+                    "type": "POST",
+                    "datatype": "json"
+                },
+                "columns": [
+                    { "data": "vendor_code", "className": "text-right align-middle text-nowrap" },
+                    { "data": "vendor_name", "className": "text-center align-middle text-nowrap" },
+                    { "data": "vendor_address", "className": "text-center align-middle text-nowrap" },
+                    { "data": "vendor_postal_code", "className": "text-right align-middle text-nowrap" },
+                    { "data": "vendor_location", "className": "text-center align-middle text-nowrap" },
+                    { "data": "vendor_batam", "className": "text-center align-middle text-nowrap" },
+                    { "data": "vendor_phone", "className": "text-right align-middle text-nowrap" },
+                    { "data": "vendor_email", "className": "text-center align-middle text-nowrap" },
+                    {
+                        "data": "id_vendor",
+                        "className": "text-center align-middle text-nowrap",
+                        "render": function (data, type, row) {
+                            return '<button class="btn btn-primary btn-s custom-btn edit-btn" data-id="' + row.id_vendor +
+                                   '" data-vendor-code="' + row.vendor_code +
+                                   '" data-vendor-name="' + row.vendor_name +
+                                   '" data-vendor-address="' + row.vendor_address +
+                                   '" data-vendor-postal-code="' + row.vendor_postal_code +
+                                   '" data-vendor-location="' + row.vendor_location +
+                                   '" data-vendor-batam="' + row.vendor_batam +
+                                   '" data-vendor-phone="' + row.vendor_phone +
+                                   '" data-vendor-email="' + row.vendor_email +
+                                   '"><i class="fa fa-edit"></i></button> ' +
+                                   '<button class="btn btn-danger btn-s custom-btn delete-btn" data-id="' + row.id_vendor +
+                                   '"><i class="fa fa-trash"></i></button>';
+                        }
+                    }
+                ],
+                "searching": true,
+                "scrollX": true,
+                "autoWidth": false,
+                "initComplete": function(settings, json) {
+                    var wrapper = $('#table_vendor_gatepass').closest('.dataTables_wrapper');
+                    $('button[name=btn_add]').appendTo(wrapper).css('display', 'block');
+
+                    $('button[name=btn_add]').css({
+                        'position': 'absolute',
+                        'top': '0px',
+                        'right': '245px'
+                    });
+                }
+            });
+
+            $('#input_vendor_batam').select2({
+                placeholder: 'Select Vendor Batam',
+                width: '100%'
+            });
+
+            $('#edit_vendor_batam').select2({
+                placeholder: 'Select Vendor Batam',
+                width: '100%'
+            });
+
+            $('#table_vendor_gatepass tbody').on('click', '.edit-btn', function () {
+                var id = $(this).data('id');
+                var vendorCode = $(this).data('vendor-code');
+                var vendorName = $(this).data('vendor-name');
+                var vendorAddress = $(this).data('vendor-address');
+                var vendorPostalCode = $(this).data('vendor-postal-code');
+                var vendorLocation = $(this).data('vendor-location');
+                var vendorBatam = $(this).data('vendor-batam');
+                var vendorPhone = $(this).data('vendor-phone');
+                var vendorEmail = $(this).data('vendor-email');
+
+                edit_data(id, vendorCode, vendorName, vendorAddress, vendorPostalCode, vendorLocation, vendorBatam, vendorPhone, vendorEmail);
+            });
+
+            $('#table_vendor_gatepass tbody').on('click', '.delete-btn', function () {
+                var id = $(this).data('id');
+                delete_data(id);
+            });
+
+            $("button[name=btn_add]").click(function () {
+                $("#modal_add").modal("show");
+            });
+        });
+
+        function edit_data(id, vendor_code, vendor_name, vendor_address, vendor_postal_code, vendor_location, vendor_batam, vendor_phone, vendor_email) {
+            $("#modal_edit").modal("show");
+            $("input[name=edit_ID]").val(id);
+            $("input[name=edit_vendor_code]").val(vendor_code);
+            $("input[name=edit_vendor_name]").val(vendor_name);
+            $("textarea[name=edit_vendor_address]").val(vendor_address);
+            $("input[name=edit_vendor_postal_code]").val(vendor_postal_code);
+            $("input[name=edit_vendor_location]").val(vendor_location);
+            $('#edit_vendor_batam').val(vendor_batam).trigger('change');
+            $("input[name=edit_vendor_phone]").val(vendor_phone);
+            $("input[name=edit_vendor_email]").val(vendor_email);
+        }
+
+        function validateEmail(email) {
+            var emailPattern = new RegExp('^[a-z0-9._%+-]+' + String.fromCharCode(64) + '[a-z0-9.-]+\\.[a-z]{2,}$', 'i');
+            return emailPattern.test(email);
+        }
+
+        $("#modal_add").on('shown.bs.modal', function (e) {
+            $("button[name=btn_adddata]").off('click').on('click', function () {
+                var vendor_code = $("input[name=input_vendor_code]").val();
+                var vendor_name = $("input[name=input_vendor_name]").val();
+                var vendor_address = $("textarea[name=input_vendor_address]").val();
+                var vendor_postal_code = $("input[name=input_vendor_postal_code]").val();
+                var vendor_location = $("input[name=input_vendor_location]").val();
+                var vendor_batam = $('#input_vendor_batam').val();
+                var vendor_phone = $("input[name=input_vendor_phone]").val();
+                var vendor_email = $("input[name=input_vendor_email]").val();
+
+                if (vendor_email && !validateEmail(vendor_email)) {
+                    Swal.fire(
+                        'Invalid Email!',
+                        'Please enter a valid email address.',
+                        'error'
+                    );
+                    return;
+                }
+
+                $.ajax({
+                    type: "POST",
+                    url: "@Url.Action("AddVendorGatepass")",
+                    data: {
+                        vendor_code: vendor_code,
+                        vendor_name: vendor_name,
+                        vendor_address: vendor_address,
+                        vendor_postal_code: vendor_postal_code,
+                        vendor_location: vendor_location,
+                        vendor_batam: vendor_batam,
+                        vendor_phone: vendor_phone,
+                        vendor_email: vendor_email
+                    },
+                    dataType: "json",
+                    success: function (result) {
+                        if (result.status == "success") {
+                            Swal.fire(
+                                'Done!',
+                                'Success Add Vendor Gatepass!',
+                                'success'
+                            ).then(() => {
+                                location.reload();
+                            });
+                        }
+                        else if (result.status == "exist") {
+                            Swal.fire(
+                                'Error!',
+                                result.message || 'Vendor code already exists!',
+                                'error'
+                            );
+                        }
+                        else {
+                            Swal.fire(
+                                'Error!',
+                                'Error Add Vendor Gatepass!',
+                                'error'
+                            );
+                        }
+                    },
+                    error: function (XMLHttpRequest, textStatus, errorThrown) {
+                        Swal.fire(
+                            'Error!',
+                            'Error Add Vendor Gatepass!',
+                            'error'
+                        );
+                    }
+                })
+            })
+        })
+
+        $('button[name=btn_editdata]').off('click').on('click', function () {
+            var id = $("input[name=edit_ID]").val();
+            var vendor_code = $("input[name=edit_vendor_code]").val();
+            var vendor_name = $("input[name=edit_vendor_name]").val();
+            var vendor_address = $("textarea[name=edit_vendor_address]").val();
+            var vendor_postal_code = $("input[name=edit_vendor_postal_code]").val();
+            var vendor_location = $("input[name=edit_vendor_location]").val();
+            var vendor_batam = $('#edit_vendor_batam').val();
+            var vendor_phone = $("input[name=edit_vendor_phone]").val();
+            var vendor_email = $("input[name=edit_vendor_email]").val();
+
+            if (vendor_email && !validateEmail(vendor_email)) {
+                Swal.fire(
+                    'Invalid Email!',
+                    'Please enter a valid email address.',
+                    'error'
+                );
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: "@Url.Action("EditVendorGatepass")",
+                data: {
+                    id: id,
+                    vendor_code: vendor_code,
+                    vendor_name: vendor_name,
+                    vendor_address: vendor_address,
+                    vendor_postal_code: vendor_postal_code,
+                    vendor_location: vendor_location,
+                    vendor_batam: vendor_batam,
+                    vendor_phone: vendor_phone,
+                    vendor_email: vendor_email
+                },
+                dataType: "json",
+                success: function (result) {
+                    if (result.status == "success") {
+                        Swal.fire(
+                            'Done!',
+                            'Success Edit Vendor Gatepass!',
+                            'success'
+                        ).then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire(
+                            'Error!',
+                            result.message || 'Error Edit Vendor Gatepass!',
+                            'error'
+                        );
+                    }
+                },
+                error: function (XMLHttpRequest, textStatus, errorThrown) {
+                    Swal.fire(
+                        'Error!',
+                        'Error Edit Vendor Gatepass!',
+                        'error'
+                    );
+                }
+            });
+        });
+
+        function delete_data(id) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You will not be able to recover this data!",
+                type: "question",
+                showCancelButton: true,
+                cancelButtonText: "No",
+                confirmButtonColor: "#DD6B55",
+                confirmButtonText: "Yes",
+                showLoaderOnConfirm: true,
+                preConfirm: function () {
+                    return new Promise(function (resolve, reject) {
+                        $.ajax({
+                            type: "POST",
+                            url: "@Url.Action("DeleteVendorGatepass")",
+                            data: { id: id },
+                            success: function (result) {
+                                Swal.fire(
+                                    'Done!',
+                                    'Success Delete Vendor Gatepass!',
+                                    'success'
+                                ).then(() => {
+                                    location.reload();
+                                });
+                            },
+                            error: function (XMLHttpRequest, textStatus, errorThrown) {
+                                Swal.fire(
+                                    'Error!',
+                                    'Error Delete Vendor Gatepass!',
+                                    'error'
+                                );
+                            }
+                        });
+                    })
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            })
+        }
+    </script>
+}

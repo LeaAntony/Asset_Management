@@ -1,0 +1,197 @@
+﻿@using System.Globalization;
+@using Microsoft.AspNetCore.Http;
+@using Asset_Management.Controllers;
+@using Asset_Management.Function;
+@model List<AssetListModel>
+@{
+}
+<style>
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+
+    .badge {
+        font-size: 11px;
+    }
+
+    .smallers-input {
+        height: 24px;
+        padding: 4px 8px;
+        font-size: 11px;
+        line-height: 1.2;
+        border: 1px solid #d0d7de;
+        border-radius: 4px;
+    }
+
+        .smallers-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.1);
+        }
+
+    @@media screen and (max-width: 768px) {
+        .modal-body {
+            padding: 16px;
+        }
+
+        .professional-table {
+            font-size: 11px;
+        }
+
+            .professional-table thead th {
+                padding: 12px 8px;
+                font-size: 10px;
+            }
+
+            .professional-table tbody td {
+                padding: 8px;
+            }
+    }
+
+    @@media screen and (max-width: 576px) {
+        .modal-header {
+            padding: 16px 20px 12px;
+        }
+
+            .modal-header .modal-title {
+                font-size: 16px;
+            }
+
+        .modal-body {
+            padding: 12px;
+        }
+
+        .professional-table {
+            font-size: 10px;
+        }
+
+            .professional-table thead th {
+                padding: 8px 6px;
+                font-size: 9px;
+            }
+
+            .professional-table tbody td {
+                padding: 6px;
+            }
+    }
+</style>
+<div class="modal-header">
+    <h5 class="modal-title"><i class="fas fa-exclamation"></i> Asset No Tagging</h5>
+    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-12">
+            <table class="table table-sm professional-table align-center nowrap" id="table_no_tagging">
+                <thead>
+                    <tr>
+                        <th>Asset No</th>
+                        <th>Subnumber</th>
+                        <th>Description</th>
+                        <th>Asset Class</th>
+                        <th>Cost Center</th>
+                        <th>Plant</th>
+                        <th>Department</th>
+                        <th>Capitalized on</th>
+                        <th>Asset Owner</th>
+                        <th>Vendor Name</th>
+                        <th>Aging Days</th>
+                        <th class="text-center" rowspan="2">Action</th>
+                    </tr>
+                    <tr>
+                        @for (int i = 0; i < 11; i++)
+                        {
+                            <th style="padding: 4px;"><input type="text" class="form-control smallers-input filters_table" id="filter_@i" /></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model)
+                    {
+                        <tr>
+                            <td class="text-right">@row.asset_no</td>
+                            <td class="text-right">@row.asset_subnumber</td>
+                            <td>@row.asset_desc</td>
+                            <td class="text-right">@row.asset_class</td>
+                            <td class="text-right">@row.cost_center</td>
+                            <td>@row.plant</td>
+                            <td>@row.department</td>
+                            <td class="text-center">@row.capitalized_on</td>
+                            <td>@row.sesa_owner</td>
+                            <td>@row.vendor_name</td>
+                            <td class="text-center">@row.aging_days</td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-success print-btn"
+                                        data-asset-no="@row.asset_no"
+                                        data-asset-subnumber="@row.asset_subnumber"
+                                        data-departement="@row.department"
+                                        data-vendor-name="@row.vendor_name"
+                                        data-capitalized-on="@row.capitalized_on"
+                                        data-name-owner="@row.sesa_owner"
+                                        data-cost-center="@row.cost_center"
+                                        data-asset-desc="@row.asset_desc"
+                                        title="Print">
+                                    <i class="fas fa-print"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+    $(function () {
+        const $tbl = $("#table_no_tagging");
+
+        const dt = $tbl.DataTable({
+            ordering: true,
+            orderCellsTop: true,
+            scrollX: true,
+            scrollCollapse: true,
+            autoWidth: false,
+            deferRender: true,
+            columnDefs: [
+                { targets: -1, orderable: false }
+            ],
+        });
+
+        $('input.filters_table').on('keyup change clear', function () {
+            var colIndex = $(this).closest('th').index();
+            if (dt.column(colIndex).search() !== this.value) {
+                dt.column(colIndex).search(this.value).draw();
+            }
+        });
+
+        const $modal = $tbl.closest(".modal");
+        $modal.on("shown.bs.modal", function () {
+            dt.columns.adjust();
+        });
+
+        dt.on("init.dt", function () {
+            dt.columns.adjust();
+        });
+
+        $('#table_no_tagging tbody').on('click', '.print-btn', function () {
+            var assetNo = $(this).data('asset-no');
+            var assetSubnumber = $(this).data('asset-subnumber');
+            var departement = $(this).data('departement');
+            var vendorName = $(this).data('vendor-name');
+            var capitalizedOn = $(this).data('capitalized-on');
+            var nameOwner = $(this).data('name-owner');
+            var costCenter = $(this).data('cost-center');
+            var assetDesc = $(this).data('asset-desc');
+
+            if (typeof print_asset === "function") {
+                print_asset(assetNo, assetSubnumber, departement, vendorName, capitalizedOn, nameOwner, costCenter, assetDesc);
+            } else {
+                const url = `../Export/PRINT_ASSET_LABEL?asset_no=${encodeURIComponent(assetNo)}&asset_subnumber=${encodeURIComponent(assetSubnumber)}&department=${encodeURIComponent(departement)}&vendorName=${encodeURIComponent(vendorName)}&capitalizedOn=${encodeURIComponent(capitalizedOn)}&nameOwner=${encodeURIComponent(nameOwner)}&costCenter=${encodeURIComponent(costCenter)}&assetDesc=${encodeURIComponent(assetDesc)}`;
+                window.open(url, '_blank');
+            }
+        });
+    });
+</script>

@@ -1,0 +1,184 @@
+﻿@using System.Globalization;
+@using Microsoft.AspNetCore.Http;
+@using Asset_Management.Controllers;
+@using Asset_Management.Function;
+@model List<AssetListModel>
+@{
+}
+<style>
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+
+    .badge {
+        font-size: 11px;
+    }
+
+    .smallers-input {
+        height: 24px;
+        padding: 4px 8px;
+        font-size: 11px;
+        line-height: 1.2;
+        border: 1px solid #d0d7de;
+        border-radius: 4px;
+    }
+
+        .smallers-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(31, 78, 121, 0.1);
+        }
+
+    @@media screen and (max-width: 768px) {
+        .modal-body {
+            padding: 16px;
+        }
+
+        .professional-table {
+            font-size: 11px;
+        }
+
+            .professional-table thead th {
+                padding: 12px 8px;
+                font-size: 10px;
+            }
+
+            .professional-table tbody td {
+                padding: 8px;
+            }
+    }
+
+    @@media screen and (max-width: 576px) {
+        .modal-header {
+            padding: 16px 20px 12px;
+        }
+
+            .modal-header .modal-title {
+                font-size: 16px;
+            }
+
+        .modal-body {
+            padding: 12px;
+        }
+
+        .professional-table {
+            font-size: 10px;
+        }
+
+            .professional-table thead th {
+                padding: 8px 6px;
+                font-size: 9px;
+            }
+
+            .professional-table tbody td {
+                padding: 6px;
+            }
+    }
+</style>
+<div class="modal-header">
+    <h5 class="modal-title"><i class="fas fa-tasks"></i> Asset Need Counting</h5>
+    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <div class="col-12">
+            <table class="table table-sm professional-table align-center nowrap" id="table_asset_need_count">
+                <thead>
+                    <tr>
+                        <th>Count Year</th>
+                        <th>Count Month</th>
+                        <th>Asset No</th>
+                        <th>Subnumber</th>
+                        <th>Description</th>
+                        <th>Asset Class</th>
+                        <th>Cost Center</th>
+                        <th>CC Desc</th>
+                        <th>CC Grouping</th>
+                        <th>CC Plant</th>
+                        <th>Capitalized on</th>
+                        <th>Department</th>
+                        <th>Asset Owner</th>
+                        <th class="text-center" rowspan="2">Action</th>
+                    </tr>
+                    <tr>
+                        @for (int i = 0; i < 13; i++)
+                        {
+                            <th style="padding: 4px;"><input type="text" class="form-control smallers-input filters_table" id="filter_@i" /></th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model)
+                    {
+                        <tr>
+                            <td class='text-right'>@row.count_year</td>
+                            <td data-sort="@row.count_month.ToString()">@row.count_month_name</td>
+                            <td class='text-right'>@row.asset_no</td>
+                            <td class='text-right'>@row.asset_subnumber</td>
+                            <td>@row.asset_desc</td>
+                            <td class='text-right'>@row.asset_class</td>
+                            <td class='text-right'>@row.cost_center</td>
+                            <td>@row.cc_desc</td>
+                            <td>@row.cc_grouping</td>
+                            <td>@row.cc_plant</td>
+                            <td>@row.capitalized_on</td>
+                            <td>@row.department</td>
+                            <td>@row.name_owner</td>
+                            <td class="text-center">
+                                @if (row.is_counted == 1)
+                                {
+                                    <span class="badge bg-warning">Waiting Validation</span>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-sm btn-warning" onclick="modal_asset_count(`@row.count_year`,`@row.asset_no`,`@row.asset_subnumber`,`@row.asset_desc`)"><i class="fa fa-arrow-right"></i> Count</button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+    $(function () {
+        const $tbl = $("#table_asset_need_count");
+
+        const dt = $tbl.DataTable({
+            ordering: true,
+            orderCellsTop: true,
+            scrollX: true,
+            scrollCollapse: true,
+            autoWidth: false,
+            deferRender: true,
+            columnDefs: [
+                { targets: -1, orderable: false }
+            ],
+            initComplete: function () {
+                var wrapper = $tbl.closest('.dataTables_wrapper');
+                wrapper.css('position', 'relative');
+                wrapper.append('<a href="@Url.Action("DOWNLOAD_ASSET_COUNT", "Requestor")" class="btn btn-primary btn-sm" style="position: absolute; top: 0px; right: 0px;"><i class="fas fa-download"></i> Download</a>');
+            }
+        });
+
+        $('input.filters_table').on('keyup change clear', function () {
+            var colIndex = $(this).closest('th').index();
+            if (dt.column(colIndex).search() !== this.value) {
+                dt.column(colIndex).search(this.value).draw();
+            }
+        });
+
+        const $modal = $tbl.closest(".modal");
+        $modal.on("shown.bs.modal", function () {
+            dt.columns.adjust();
+        });
+
+        dt.on("init.dt", function () {
+            dt.columns.adjust();
+        });
+    });
+</script>

@@ -1,0 +1,268 @@
+﻿@model Asset_Management.Models.LoginModel
+@using Microsoft.AspNetCore.Mvc.Rendering;
+@using Microsoft.AspNetCore.Http
+@using System.Security.Claims;
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Management</title>
+    <link href="~/Content/adminlte.min.css" rel="stylesheet" />
+    <link href="~/lib/adminlte/plugins/fontawesome-free/css/all.css" rel="stylesheet" />
+    <link href="~/lib/adminlte/plugins/fontawesome-free/css/fontawesome.css" rel="stylesheet" />
+    <link href="~/lib/adminlte/plugins/fontawesome-free/css/solid.css" rel="stylesheet" />
+    <link href="~/lib/bootstrap/dist/css/bootstrap.css" rel="stylesheet" />
+    <link href="~/lib/adminlte/dist/css/adminlte.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/custom-fonts.css?v=1.1" />
+</head>
+
+<body class="bg">
+    @Html.AntiForgeryToken()
+
+    <div class="d-flex justify-content-center align-items-center vh-100">
+        <div class="container mask p-4 p-md-5 shadow-lg">
+            <div class="row align-items-center justify-content-center">
+
+                <div class="col-12 col-lg-6 text-lg-start mb-4 mb-lg-0 custom-alignment">
+                    <div>
+                        <img src="~/images/logo/amt_black.png" alt="Logo" class="nav-logo">
+                    </div>
+                    <h8 class="text-muted">Fix-Asset Management</h8>
+                    <div class="mt-4">
+                        <p class="text-muted small">version 1.0</p>
+                    </div>
+                </div>
+
+                <div class="col-12 col-lg-6">
+                    <div class="p-3 p-md-4 text-lg-start">
+                        <div class="custom-alignment text-lg-start mb-3">
+                            <h4>Welcome,</h4>
+                            <h4>Please Login</h4>
+                        </div>
+
+                        @if (TempData["AccessDenied"] != null)
+                        {
+                            <div class="alert alert-danger text-center small mb-3">
+                                You don't have access,<br />
+                                Please contact admin for support.
+                            </div>
+                        }
+
+                        <div id="alertLogin" class="alert d-none mb-3" role="alert"></div>
+
+                        <div class="mb-3">
+                            <label for="inputSesaId" class="form-label fw-semibold">SESA ID</label>
+                            <input type="text" class="form-control" id="inputSesaId"
+                                   placeholder="e.g. SESA123456"
+                                   autocomplete="username" maxlength="20">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="inputPassword" class="form-label fw-semibold">Password</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="inputPassword"
+                                       placeholder="Enter password" autocomplete="current-password">
+                                <button class="btn btn-outline-secondary" type="button"
+                                        id="btnTogglePassword" tabindex="-1"
+                                        aria-label="Toggle password visibility">
+                                    <i class="fas fa-eye" id="iconEye"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="d-grid mt-2">
+                            <button type="button"
+                                    class="btn btn-success btn-flat rounded py-2"
+                                    id="btnLogin">
+                                <i class="fas fa-sign-in-alt me-1"></i>
+                                <span id="btnLoginText">Login</span>
+                                <span id="btnLoginSpinner"
+                                      class="spinner-border spinner-border-sm d-none ms-1"
+                                      role="status" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="row w-100 mt-4 pt-3 border-top">
+                <div class="col-12 d-flex flex-column flex-md-row justify-content-between align-items-center text-center text-md-start">
+                    <div class="text-success mb-2 mb-md-0">
+                        <ul class="list-unstyled mb-0 small">
+                                <li>&copy;2026 - IT-Infrastructure-Support</li>
+                            <li>Asset Management Batam</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <img src="~/images/logo/aml_black.png"
+                             class="d-inline-block align-text-top img-fluid"
+                             style="max-width: 120px;"
+                             alt="Asset Management Logo">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.js"></script>
+    <script>
+        (function () {
+            'use strict';
+
+            var inputSesaId    = document.getElementById('inputSesaId');
+            var inputPassword  = document.getElementById('inputPassword');
+            var alertBox       = document.getElementById('alertLogin');
+            var btnLogin       = document.getElementById('btnLogin');
+            var btnLoginText   = document.getElementById('btnLoginText');
+            var btnLoginSpinner = document.getElementById('btnLoginSpinner');
+            var btnToggle      = document.getElementById('btnTogglePassword');
+            var iconEye        = document.getElementById('iconEye');
+
+            btnToggle.addEventListener('click', function () {
+                if (inputPassword.type === 'password') {
+                    inputPassword.type = 'text';
+                    iconEye.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    inputPassword.type = 'password';
+                    iconEye.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            });
+
+            inputSesaId.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); inputPassword.focus(); }
+            });
+
+            inputPassword.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') { e.preventDefault(); doLogin(); }
+            });
+
+            btnLogin.addEventListener('click', doLogin);
+
+            function showAlert(message, type) {
+                alertBox.className  = 'alert alert-' + type;
+                alertBox.textContent = message;
+            }
+
+            function hideAlert() {
+                alertBox.className  = 'alert d-none';
+                alertBox.textContent = '';
+            }
+
+            function setLoading(isLoading) {
+                btnLogin.disabled        = isLoading;
+                btnLoginText.textContent = isLoading ? 'Logging in...' : 'Login';
+                btnLoginSpinner.classList.toggle('d-none', !isLoading);
+            }
+
+            function doLogin() {
+                var sesaId   = inputSesaId.value.trim();
+                var password = inputPassword.value;
+
+                hideAlert();
+
+                if (!sesaId || !password) {
+                    showAlert('Please enter SESA ID and password.', 'warning');
+                    if (!sesaId) inputSesaId.focus();
+                    else         inputPassword.focus();
+                    return;
+                }
+
+                var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (!tokenInput) {
+                    showAlert('Security token missing. Please refresh the page.', 'danger');
+                    return;
+                }
+
+                setLoading(true);
+
+                fetch('@Url.Action("ManualLogin", "Home")', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({
+                        sesa_id:  sesaId,
+                        password: password,
+                        __RequestVerificationToken: tokenInput.value
+                    })
+                })
+                .then(function (res) {
+                    if (!res.ok) throw new Error('Network error');
+                    return res.json();
+                })
+                .then(function (data) {
+                    if (data.success) {
+                        showAlert('Login successful! Redirecting...', 'success');
+                        setTimeout(function () { window.location.href = data.redirectUrl; }, 600);
+                    } else {
+                        showAlert(data.message || 'Login failed. Please try again.', 'danger');
+                        inputPassword.value = '';
+                        inputPassword.focus();
+                        setLoading(false);
+                    }
+                })
+                .catch(function () {
+                    showAlert('An error occurred. Please try again.', 'danger');
+                    setLoading(false);
+                });
+            }
+        })();
+    </script>
+
+    <style>
+        .bg {
+            background: url('@Url.Content("~/images/background/bg-am.jpg")');
+            width: 100%;
+            background-size: cover;
+        }
+
+        .mask {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+        }
+
+        .shadow-lg {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+        }
+
+        .btn-success,
+        .btn-outline-secondary {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+
+            .btn-success:hover,
+            .btn-outline-secondary:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            }
+
+        .custom-alignment {
+            text-align: center;
+        }
+
+        .nav-logo {
+            width: 60%;
+            height: auto;
+        }
+
+        @@media (max-width: 768px) {
+            .custom-alignment {
+                text-align: center !important;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .nav-logo {
+                margin-top: 10pt;
+                width: 90%;
+            }
+        }
+    </style>
+</body>
+</html>

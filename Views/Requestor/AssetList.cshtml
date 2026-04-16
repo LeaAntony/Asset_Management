@@ -1,0 +1,1109 @@
+﻿@model List<UserDetailModel>
+@using Microsoft.AspNetCore.Mvc.Rendering;
+@using Microsoft.AspNetCore.Http;
+@using Asset_Management.Function;
+@{
+    var user = Model.First();
+    int totalNoTagging = (int)(ViewBag.totalNoTagging ?? 0);
+    int totalAssetNeedCount = (int)(ViewBag.totalAssetNeedCount ?? 0);
+}
+
+<link href="~/lib/adminlte/plugins/datatables-fixedcolumns/css/fixedColumns.bootstrap4.min.css" rel="stylesheet" />
+
+<style>
+    #loadingSpinner {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+        #loadingSpinner img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+    .box_form_input {
+        background-color: #fcfcfc;
+        border-radius: 5px;
+        box-shadow: 1px 2px 8px 2px rgba(152,152,152,0.7);
+    }
+
+    .modal {
+        overflow: auto !important
+    }
+
+    .smaller-input {
+        height: 20px;
+        padding: 5px;
+        font-size: 10px;
+        line-height: 1;
+        width: 100%;
+    }
+
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 10pt;
+    }
+
+    .dataTables_filter {
+        display: none;
+    }
+
+    table#table_asset tr > td {
+        padding: 5px;
+    }
+
+    .btn-group-xs > .btn, .btn-xs {
+        padding: .25rem .4rem;
+        font-size: .875rem;
+        line-height: .5;
+        border-radius: .2rem;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .asset-list-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e9ecef;
+        margin-bottom: 16px;
+        transition: box-shadow 0.3s ease;
+    }
+
+        .asset-list-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .asset-list-card .card-header {
+            background-color: #ffffff;
+            border-bottom: 2px solid var(--light-gray);
+            padding: 20px 24px 16px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .asset-list-card .card-body {
+            padding: 16px;
+        }
+
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+
+    @@media screen and (max-width: 768px) {
+        .asset-list-card .card-body {
+            padding: 16px;
+        }
+    }
+
+    .kpi-card-split {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e9ecef;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .kpi-card-split__body {
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--kpi-accent, var(--info));
+        color: #fff;
+    }
+
+    .kpi-card-split .kpi-value {
+        font-weight: 800;
+        color: #fff;
+        font-size: 28px;
+        line-height: 1.1;
+    }
+
+    .kpi-card-split__body .kpi-label {
+        color: rgba(255,255,255,0.92);
+        font-weight: 600;
+        letter-spacing: .3px;
+    }
+
+    .kpi-card-split__body small {
+        color: rgba(255,255,255,0.85) !important;
+    }
+
+    .kpi-card-split__body .kpi-icon i {
+        color: rgba(255,255,255,0.9);
+        font-size: 20px;
+    }
+
+    .kpi-card-split__cta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0px 16px;
+        min-height: 36px;
+        background: linear-gradient(rgba(0,0,0,0.12), rgba(0,0,0,0.12)), var(--kpi-accent, var(--info));
+        color: #fff !important;
+        text-decoration: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.45);
+    }
+
+        .kpi-card-split__cta:hover {
+            background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), var(--kpi-accent, var(--info));
+        }
+
+    .kpi-card-split__body {
+        flex: 1 1 auto;
+    }
+
+    .kpi-card-split__cta {
+        margin-top: auto;
+    }
+
+    .small-box-footer {
+        color: white !important;
+    }
+
+    .hero {
+        min-height: 70px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        color: #fff;
+    }
+
+        .hero .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+        }
+
+        .hero .hero-body {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        .hero .hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+    .inner {
+        height: 70px;
+        position: relative;
+    }
+
+    .hero .inner {
+        background: rgba(0,0,0,0.7);
+    }
+
+    .professional-table {
+        font-size: 12px;
+        border-collapse: separate;
+        border-spacing: 0;
+        clip-path: inset(0 round 8px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        width: 100%;
+    }
+
+        .professional-table thead th {
+            background: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            padding: 8px 12px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .professional-table tbody td {
+            border: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .professional-table tbody tr:hover {
+            background-color: var(--background-gray);
+        }
+
+        .professional-table th,
+        .professional-table td {
+            box-sizing: border-box;
+            white-space: nowrap;
+        }
+
+    #table_asset tbody tr.search-row {
+        background-color: #f8f9fa;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+        #table_asset tbody tr.search-row td {
+            border-bottom: 2px solid #dee2e6;
+            background-color: #f8f9fa;
+        }
+
+            #table_asset tbody tr.search-row td input.smaller-input {
+                background-color: #ffffff;
+                border: 1px solid #ced4da;
+            }
+
+    #table_asset.dataTable thead th:nth-child(1),
+    #table_asset.dataTable thead th:nth-child(2),
+    #table_asset.dataTable tbody td:nth-child(1),
+    #table_asset.dataTable tbody td:nth-child(2) {
+        position: sticky;
+        background-color: inherit;
+        z-index: 2;
+    }
+
+    #table_asset.dataTable thead th:nth-child(1),
+    #table_asset.dataTable tbody td:nth-child(1) {
+        left: 0;
+    }
+
+    #table_asset.dataTable thead th:nth-child(2),
+    #table_asset.dataTable tbody td:nth-child(2) {
+        left: 0;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-striped > tbody > tr:nth-of-type(odd),
+    .table-striped > tbody > tr:nth-of-type(even),
+    .dataTable tbody tr.odd,
+    .dataTable tbody tr.even {
+        background-color: #ffffff !important;
+    }
+
+    #table_asset.dataTable tbody tr.odd > td,
+    #table_asset.dataTable tbody tr.even > td,
+    .DTFC_Cloned tbody tr.odd > td,
+    .DTFC_Cloned tbody tr.even > td,
+    #table_asset.table-striped > tbody > tr:nth-of-type(odd) > * {
+        background-color: #ffffff !important;
+        --bs-table-accent-bg: #ffffff !important;
+    }
+
+    #table_asset tbody td {
+        background-color: #ffffff !important;
+    }
+
+    #table_asset thead th,
+    #table_asset tbody tr.search-row td {
+        border: 0;
+        box-shadow: none !important;
+    }
+</style>
+
+<section id="hero" class="hero bg-dark position-relative" style="background: url('@Url.Content("~/images/background/bg-am.jpg")') center center / cover no-repeat fixed;">
+    <div class="inner d-flex justify-content-between align-items-center px-3 py-2 w-100">
+
+        <div>
+        </div>
+
+        <div class="position-absolute top-50 start-50 translate-middle text-center">
+            <h3 class="text-white mb-0">
+                <i class="fa fa-table text-success"></i>
+                <b>Asset List</b>
+            </h3>
+        </div>
+
+        <div class="ms-auto">
+        </div>
+
+    </div>
+</section>
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-12 mt-3">
+                <div class="asset-list-card fade-in">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-4 mb-2">
+                                <div class="kpi-card-split" style="--kpi-accent: var(--warning);">
+                                    <div class="kpi-card-split__body">
+                                        <div class="d-flex align-items-center w-100">
+                                            <div class="kpi-icon me-3"><i class="fas fa-exclamation"></i></div>
+                                            <div style="text-align: left; margin: 0; padding: 0; line-height: 1;">
+                                                <div class="kpi-value">@totalNoTagging</div>
+                                                <div class="kpi-label">Assets No Tagging</div>
+                                                <small style="font-size:7pt;color:#6c757d; margin-top: 0;">Owner : @user.name</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="javascript:void(0);" class="kpi-card-split__cta" onclick="open_no_tagging()">
+                                        Click here to update! <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="col-4 mb-2">
+                                <div class="kpi-card-split" style="--kpi-accent: var(--info);">
+                                    <div class="kpi-card-split__body">
+                                        <div class="d-flex align-items-center w-100">
+                                            <div class="kpi-icon me-3"><i class="fas fa-tasks"></i></div>
+                                            <div style="text-align: left; margin: 0; padding: 0; line-height: 1;">
+                                                <div class="kpi-value">@totalAssetNeedCount</div>
+                                                <div class="kpi-label">Assets Need Count</div>
+                                                <small style="font-size:7pt;color:#6c757d; margin-top: 0;">Owner : @user.other_dept</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="javascript:void(0);" class="kpi-card-split__cta" onclick="open_asset_need_count()">
+                                        Click here to update! <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="col-4 mb-2">
+                                <div class="kpi-card-split" style="--kpi-accent: var(--info);">
+                                    <div class="kpi-card-split__body">
+                                        <div class="d-flex align-items-center w-100">
+                                            <div class="kpi-icon me-3"><i class="fas fa-download"></i></div>
+                                            <div style="text-align: left; margin: 0; padding: 0; line-height: 1;">
+                                                <div class="kpi-value">Export</div>
+                                                <div class="kpi-label">Download Data</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="@Url.Action("DOWNLOAD_ASSET_LIST", "Requestor")" id="btn_download_data" class="kpi-card-split__cta">
+                                        Click here to download! <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <table class="table professional-table align-center nowrap" id="table_asset" style="font-size:8pt; width:100%">
+                                    <thead class="bg-secondary align-middle text-center">
+                                        <tr>
+                                            <th>Asset No</th>
+                                            <th style="box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);">Subno</th>
+                                            <th>Description</th>
+                                            <th>Asset Class</th>
+                                            <th>Cost Center</th>
+                                            <th>CC Desc</th>
+                                            <th>CC Grouping</th>
+                                            <th>CC Plant</th>
+                                            <th>Capitalized on</th>
+                                            <th>APC FY start</th>
+                                            <th>Acquisition</th>
+                                            <th>Retirement</th>
+                                            <th>Transfer</th>
+                                            <th>Current APC</th>
+                                            <th>Dep. FY start</th>
+                                            <th>Dep. for year</th>
+                                            <th>Dep.retir.</th>
+                                            <th>Dep.transfer</th>
+                                            <th>Accumul. dep.</th>
+                                            <th>Bk.val.FY strt</th>
+                                            <th>Curr.bk.val.</th>
+                                            <th>Currency</th>
+                                            <th>Department</th>
+                                            <th>Plant</th>
+                                            <th>Owner</th>
+                                            <th>Tagging Status</th>
+                                            <th>Vendor Name</th>
+                                            <th>Asset Location</th>
+                                            <th>Asset Location Address</th>
+                                            <th>Order ID</th>
+                                            <th>Tagging Image</th>
+                                            <th class="align-middle" rowspan="2">Action</th>
+                                        </tr>
+                                        <tr class="search-row">
+                                            @for (int i = 0; i < 1; i++)
+                                            {
+                                                <th class="search-row" style="position: sticky; left: 0;"><input type="text" class="form-control smaller-input filter_table" target="@i" /></th>
+                                            }
+                                            @for (int i = 1; i < 2; i++)
+                                            {
+                                                <th class="search-row" style="position: sticky; left: 100px; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);"><input type="text" class="form-control smaller-input filter_table" target="@i" /></th>
+                                            }
+                                            @for (int i = 2; i < 31; i++)
+                                            {
+                                                <th><input type="text" class="form-control smaller-input filter_table" target="@i" /></th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Element spinner -->
+            <div id="loadingSpinner" style="display: none;">
+                <span class="spinner-border spinner-border" role="status" aria-hidden="true"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_asset" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:80%">
+        <div class="modal-content">
+            <div id="body_asset">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_asset_count" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:50%">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-tasks"></i> Asset Count</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <table class="table professional-table align-center nowrap">
+                    <thead>
+                        <tr>
+                            <th>Asset No</th>
+                            <th>Sub</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td id="count_asset_no"></td>
+                            <td id="count_asset_subnumber"></td>
+                            <td id="count_asset_desc"></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <form enctype="multipart/form-data" id="form_asset_count">
+                    <input type="hidden" name="count_year" />
+                    <input type="hidden" name="asset_no" />
+                    <input type="hidden" name="asset_subnumber" />
+                    <table class="table">
+                        <tr>
+                            <td>Existence</td>
+                            <td style="width:60%">
+                                <select class="form-select" name="existence" style="width:100%" required>
+                                    <option value="">--Select--</option>
+                                    <option value="YES">YES</option>
+                                    <option value="NO">NO</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Condition Good Active</td>
+                            <td>
+                                <select class="form-select" name="good_condition" required>
+                                    <option value="">--Select--</option>
+                                    <option value="YES">YES</option>
+                                    <option value="NO">NO</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Still In Operation</td>
+                            <td>
+                                <select class="form-select" name="still_in_operation" required>
+                                    <option value="">--Select--</option>
+                                    <option value="YES">YES</option>
+                                    <option value="NO">NO</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Tagging Available</td>
+                            <td>
+                                <select class="form-select" name="tagging_available" required>
+                                    <option value="">--Select--</option>
+                                    <option value="YES">YES</option>
+                                    <option value="NO">NO</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Applicable of Tagging</td>
+                            <td>
+                                <select class="form-select" name="applicable_of_tagging" required>
+                                    <option value="">--Select--</option>
+                                    <option value="YES">YES</option>
+                                    <option value="NO">NO</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Correct Naming</td>
+                            <td>
+                                <select class="form-select" name="correct_naming" required>
+                                    <option value="">--Select--</option>
+                                    <option value="YES">YES</option>
+                                    <option value="NO">NO</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Correct Location</td>
+                            <td>
+                                <select class="form-select" name="correct_location" required>
+                                    <option value="">--Select--</option>
+                                    <option value="YES">YES</option>
+                                    <option value="NO">NO</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>Re-tagging</td>
+                            <td>
+                                <select class="form-select" name="retagging" required>
+                                    <option value="">--Select--</option>
+                                    <option value="YES">YES</option>
+                                    <option value="NO">NO</option>
+                                </select>
+                            </td>
+                        </tr>
+                        <tr id="old_image" style="display:none">
+                            <td>Pictures of Last Count</td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>Upload Pictures of Asset</td>
+                            <td>
+                                <input type="file" name="file_imgs" id="file_imgs" accept="image/*" multiple required>
+                            </td>
+                        </tr>
+                    </table>
+                    <div class="form-group text-end">
+                        <button class="btn btn-success" name="btn_submit_count"><i class="fas fa-check"></i> Submit</button>
+                    </div>
+                </form>
+                <br />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pdfModal" class="modal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="pdfModalTitle"></h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="dataframe">
+                    <iframe id="pdfIframe" src="" frameborder="0" style="width: 100%; height: 500px;"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_update_tagging" class="modal fade">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-import"></i> Upload Tagging File</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form enctype="multipart/form-data" id="form_update_tagging">
+                    <input type="hidden" name="asset_no" />
+                    <input type="hidden" name="asset_subnumber" />
+                    <input type="hidden" name="tagging_status" />
+                    <div class="mt-2">
+                        <div class="form-group">
+                            <i class="fas fa-file-image"></i> <label> Please upload images tagging with type (.jpg & .png) </label>
+                            <input type="file" name="file_tagging" id="file_tagging" accept="image/*" multiple required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 mt-2 text-end">
+                            <button class="btn btn-success" name="submit_tagging" type="submit" value="Upload"><i class="fas fa-file-upload"></i> Update</button>
+                        </div>
+                    </div>
+                </form>
+                <br />
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="pdf-popup-modal" class="modal fade" tabindex="-1" aria-labelledby="filelabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content" style="height:100%">
+            <div class="modal-body">
+                <iframe id="pdf-iframe" src="" style="width: 100%; height: 80vh;"></iframe>
+                <button class="align-middle btn btn-sm btn-secondary" id="close_pdf_popup_btn" style="width:50%; position:relative; left:25%" onclick="closePDF()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/adminlte/plugins/datatables-fixedcolumns/js/dataTables.fixedColumns.min.js"></script>
+
+    <script>
+        var table;
+        var loading = "<div class='text-center'><i class='fa fa-4x fa-spinner fa-spin'></i></div>";
+        var sesa_id = "@user.sesa_id".toUpperCase();
+        var searchValues = {};
+        var lastFocusedInput = null;
+        var lastCursorPosition = 0;
+
+        function openPDF(filename) {
+            var pdfURL = "../WI/" + filename;
+            $("#pdf-popup-modal").modal("show");
+            var iframe = document.getElementById("pdf-iframe");
+            iframe.src = pdfURL;
+        }
+
+        function closePDF() {
+            $("#pdf-popup-modal").modal("hide");
+            var iframe = document.getElementById("pdf-iframe");
+            iframe.src = "";
+        }
+
+        $(document).ready(function () {
+            var table = $("#table_asset").DataTable({
+                "orderCellsTop": true,
+                "processing": true,
+                "serverSide": true,
+                "filter": true,
+                "scrollX": true,
+                "scrollCollapse": true,
+                "fixedColumns": true,
+                "fixedColumns": { leftColumns: 2 },
+                "autoWidth": false,
+                "columnDefs": [
+                    { targets: [0, 1, 3, 4], className: 'text-right' },
+                    { targets: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], render: function (data, type, row) {
+                        var dataValue = parseFloat(data) || 0;
+                        return '<div class="currency-container"><span class="currency-symbol">$</span><span class="currency-value">' + dataValue.toLocaleString() + '</span></div>';
+                    } }
+                ],
+                "ajax": {
+                    "url": "@Url.Action("GetAssetList")",
+                    "type": "POST",
+                    "datatype": "json"
+                },
+                "columns": [
+                    { "data": "asset_no" },
+                    { "data": "asset_subnumber" },
+                    { "data": "asset_desc", "className": "align-middle" },
+                    { "data": "asset_class" },
+                    { "data": "cost_center" },
+                    { "data": "cc_desc", "className": "align-middle" },
+                    { "data": "cc_grouping", "className": "align-middle" },
+                    { "data": "cc_plant", "className": "align-middle" },
+                    { "data": "capitalized_on", "className": "align-middle" },
+                    { "data": "apc_fy_start", "className": "align-middle" },
+                    { "data": "acquisition", "className": "align-middle" },
+                    { "data": "retirement", "className": "align-middle" },
+                    { "data": "transfer", "className": "align-middle" },
+                    { "data": "current_apc", "className": "align-middle" },
+                    { "data": "dep_fy_start", "className": "align-middle" },
+                    { "data": "dep_for_year", "className": "align-middle" },
+                    { "data": "dep_retir", "className": "align-middle" },
+                    { "data": "dep_transfer", "className": "align-middle" },
+                    { "data": "accumul_dep", "className": "align-middle" },
+                    { "data": "bk_val_fy", "className": "align-middle" },
+                    { "data": "curr_bk_val", "className": "align-middle" },
+                    { "data": "currency", "className": "align-middle" },
+                    { "data": "department", "className": "align-middle" },
+                    { "data": "plant", "className": "align-middle" },
+                    { "data": "name_owner", "className": "align-middle" },
+                    { "data": "tagging_status", "className": "align-middle text-center" },
+                    { "data": "vendor_name", "className": "align-middle" },
+                    { "data": "asset_location", "className": "align-middle" },
+                    { "data": "asset_location_address", "className": "align-middle" },
+                    {
+                        "data": "filename_doc",
+                        render: function (data, type, row) {
+                            if (data == 'null' || data == '' || data == null) {
+                                return ''
+                            } else {
+                                var cleanedData = data.replace('_BEFORE.pdf','');
+                                return "<a target='_blank' href='../Upload/Disposal/" + row['filename_doc'] + "'>" + cleanedData + " <i class='far fa-file-pdf'></i></a>";
+                            }
+
+                        }
+                    },
+                    { "data": "file_tag_status", "className": "align-middle text-center" },
+                    {
+                        "data": "asset_no",
+                        "className": "align-middle",
+                        "orderable": false,
+                        "render": function (data, type, row) {
+                                let btn_edit = (row.sesa_owner.toUpperCase() == sesa_id) ? '<button class="btn btn-xs edit-btn text-center align-middle btn-warning mr-2" data-asset-no="' + row.asset_no + '" data-asset-subnumber="' + row.asset_subnumber + '" data-tagging-status="' + row.tagging_status + '"><i class="fas fa-pencil-alt"></i></button>' : '';
+                                return '<button class="btn btn-xs info-btn text-center align-middle btn-info mr-2" data-asset-no="' + row.asset_no + '" data-asset-subnumber="' + row.asset_subnumber + '"><i class="fas fa-info-circle"></i></button>' +
+                                    btn_edit +
+                                    '<button class="btn btn-xs print-btn text-center align-middle btn-success" ' +
+                                    'data-asset-no="' + row.asset_no + '" ' +
+                                    'data-asset-subnumber="' + row.asset_subnumber + '" ' +
+                                    'data-departement="' + row.department + '" ' +
+                                    'data-vendor-name="' + row.vendor_name + '" ' +
+                                    'data-capitalized-on="' + row.capitalized_on + '" ' +
+                                    'data-name-owner="' + row.name_owner + '" ' +
+                                    'data-cost-center="' + row.cost_center + '" ' +
+                                    'data-asset-desc="' + row.asset_desc + '">' +
+                                    '<i class="fas fa-print"></i></button>';
+                        }
+                    }
+                ]
+            });
+
+            $('#table_asset tbody').on('click', '.info-btn', function () {
+                var assetNo = $(this).data('asset-no');
+                var assetSubnumber = $(this).data('asset-subnumber');
+                showimgtagging(assetNo, assetSubnumber);
+            });
+
+            $('#table_asset tbody').on('click', '.edit-btn', function () {
+                event.stopPropagation();
+                var assetNo = $(this).data('asset-no');
+                var assetSubnumber = $(this).data('asset-subnumber');
+                var taggingStatus = $(this).data('tagging-status');
+                modal_update_tagging(assetNo, assetSubnumber, taggingStatus);
+            });
+
+            $('#table_asset tbody').on('click', '.print-btn', function () {
+                var assetNo = $(this).data('asset-no');
+                var assetSubnumber = $(this).data('asset-subnumber');
+                var departement = $(this).data('departement');
+                var vendorName = $(this).data('vendor-name');
+                var capitalizedOn = $(this).data('capitalized-on');
+                var nameOwner = $(this).data('name-owner');
+                var costCenter = $(this).data('cost-center');
+                var assetDesc = $(this).data('asset-desc');
+
+                print_asset(assetNo, assetSubnumber, departement, vendorName, capitalizedOn, nameOwner, costCenter, assetDesc);
+            });
+
+            $('input.filter_table', this).on('keyup change', function () {
+                let trgt = $(this).attr('target');
+                if (table.column(trgt).search() !== this.value) {
+                    table
+                        .column(trgt)
+                        .search(this.value)
+                        .draw();
+                }
+            });
+
+            $('#file_tagging').on('change', function () {
+                var files = $(this)[0].files;
+                var valid = true;
+
+                for (var i = 0; i < files.length; i++) {
+                    var file = files[i];
+
+                    if (!file.type.startsWith('image/')) {
+                        valid = false;
+                        break;
+                    }
+                }
+
+                if (!valid) {
+                    swal.fire("Error!", "One or more files are not images. Please upload only image files.", "error");
+                    $(this).val('');
+                }
+            });
+
+            $("form#form_update_tagging").submit(function (e) {
+                e.preventDefault();
+                let formData = new FormData(this);
+                Swal.fire({
+                    title: 'Confirm',
+                    text: "Are you sure ?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    confirmButtonText: 'Yes!',
+                    cancelButtonText: 'No!',
+                    showLoaderOnConfirm: true,
+                    preConfirm: function () {
+                        return new Promise(function (resolve, reject) {
+                            $.ajax({
+                                url: "@Url.Action("UpdateTaggingAsset")",
+                                type: 'POST',
+                                data: formData,
+                                cache: false,
+                                contentType: false,
+                                processData: false
+                            }).done(function (res) {
+                                let arr = res.split(";");
+                                if (arr[0] == "success") {
+                                    let email_remark = "";
+                                    if (arr[1] != "success") { email_remark = "Failed to Send Email: " + arr[1]; }
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Done!!',
+                                        html: arr[2] + "<br>" + email_remark
+                                    }).then(function () {
+                                        $("div#modal_update_tagging").modal("hide");
+                                        let tagging_status = formData.get("tagging_status");
+                                        if (tagging_status.toUpperCase() == "YES") {
+                                            table.ajax.reload(null, false);
+                                        } else {
+                                            open_no_tagging();
+                                        }
+                                    })
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error!!',
+                                        html: res,
+                                        width: 800
+                                    });
+                                }
+                            }).fail(function (err) {
+                                swal.fire("Error", "Upload Failed -> " + err, "error");
+                            })
+                        })
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                })
+            })
+
+            $('#file_imgs').on('change', function () {
+                var files = $(this)[0].files;
+                var valid = true;
+                for (var i = 0; i < files.length; i++) {
+                    var file = files[i];
+                    if (!file.type.startsWith('image/')) { valid = false; break; }
+                }
+                if (!valid) {
+                    swal.fire("Error!", "One or more files are not images. Please upload only image files.", "error");
+                    $(this).val('');
+                }
+            });
+
+            $("form#form_asset_count").submit(function (e) {
+                e.preventDefault();
+                let formData = new FormData(this);
+                Swal.fire({
+                    title: 'Confirm',
+                    text: "Are you sure ?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    confirmButtonText: 'Yes!',
+                    cancelButtonText: 'No!',
+                    showLoaderOnConfirm: true,
+                    preConfirm: function () {
+                        return new Promise(function (resolve, reject) {
+                            $.ajax({
+                                url: "@Url.Action("SubmitAssetCount")",
+                                type: 'POST',
+                                data: formData,
+                                cache: false,
+                                contentType: false,
+                                processData: false
+                            }).done(function (res) {
+                                let arr = res.split(";");
+                                if (arr[0] == "success") {
+                                    let email_remark = "";
+                                    if (arr[1] != "success") { email_remark = "Failed to Send Email: " + arr[1]; }
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Done!!',
+                                        html: arr[2] + "<br>" + email_remark
+                                    }).then(function () {
+                                        $("div#modal_asset_count").modal("hide");
+                                        $("form#form_asset_count")[0].reset();
+                                        open_asset_need_count();
+                                    })
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error!!',
+                                        html: res,
+                                        width: 800
+                                    });
+                                }
+                            }).fail(function (err) {
+                                swal.fire("Error", "Upload Failed -> " + err, "error");
+                            })
+                        })
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                })
+            })
+
+            $("select[name=existence]").change(function () {
+                let val = $(this).val();
+                let $form = $("form#form_asset_count");
+                let related = $form.find("select[name=good_condition], select[name=still_in_operation], select[name=tagging_available], select[name=applicable_of_tagging], select[name=correct_naming], select[name=correct_location], select[name=retagging]");
+
+                if (val === "NO") {
+                    related.val("NO").trigger("change");
+                    $form.find("input[name=file_imgs]").removeAttr("required");
+                } else {
+                    $form.find("input[name=file_imgs]").attr("required", "required");
+                }
+            });
+        });
+
+        function open_no_tagging() {
+            $("div#body_asset").html(loading);
+            $("div#modal_asset").modal("show");
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("GetAssetNoTagging")"
+            }).done(function(res){
+                $("div#body_asset").html(res);
+            }).fail(function (err) {
+                swal.fire("Error", "Get Data Failed -> " + err, "error");
+            })
+        }
+
+        function open_asset_need_count() {
+            $("div#body_asset").html(loading);
+            $("div#modal_asset").modal("show");
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("GetAssetNeedCount")"
+            }).done(function (res) {
+                $("div#body_asset").html(res);
+            }).fail(function (err) {
+                swal.fire("Error", "Get Data Failed -> " + err, "error");
+            })
+        }
+
+        function modal_asset_count(count_year, asset_no, asset_subnumber, asset_desc) {
+            asset_desc = decodeURIComponent(asset_desc);
+            let $form = $("form#form_asset_count");
+            $form.find("input[name=count_year]").val(count_year);
+            $form.find("input[name=asset_no]").val(asset_no);
+            $form.find("input[name=asset_subnumber]").val(asset_subnumber);
+            $("td#count_asset_no").html(asset_no);
+            $("td#count_asset_subnumber").html(asset_subnumber);
+            $("td#count_asset_desc").html(asset_desc);
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("GetCountedResult")",
+                data: {
+                    count_year: count_year,
+                    asset_no: asset_no,
+                    asset_subnumber: asset_subnumber
+                }
+            }).done(function(res){
+                let arr = res[0];
+                $form.find("select[name=existence]").val(arr.existence.toUpperCase());
+                $form.find("select[name=good_condition]").val(arr.good_condition.toUpperCase());
+                $form.find("select[name=still_in_operation]").val(arr.still_in_operation.toUpperCase());
+                $form.find("select[name=tagging_available]").val(arr.tagging_available.toUpperCase());
+                $form.find("select[name=applicable_of_tagging]").val(arr.applicable_of_tagging.toUpperCase());
+                $form.find("select[name=correct_naming]").val(arr.correct_naming.toUpperCase());
+                $form.find("select[name=correct_location]").val(arr.correct_location.toUpperCase());
+                $form.find("select[name=retagging]").val(arr.retagging.toUpperCase());
+                $("select[name=existence]").change();
+                if (arr.file_imgs != ""){
+                    $form.find("tr#old_image").show();
+                    $form.find("tr#old_image > td:eq(1)").html(`<a target="_blank" href="../Upload/Count/${arr.file_imgs}">${arr.file_imgs}</a><br><small style="font-size:6pt;color:red">Upload pictures below to change the last count pictures!!</small>`)
+                }
+                else {
+                    $form.find("tr#old_image").hide();
+                }
+                $("div#modal_asset_count").modal("show");
+            })
+        }
+
+        $(document).ready(function () {
+            $('#btn_download_data').on('click', function () {
+                var $button = $(this);
+                var href = $button.attr('href');
+                $button.prop('disabled', true);
+                $button.html('<i class="fas fa-spinner fa-spin"></i> Downloading...');
+
+                $.ajax({
+                    type: 'GET',
+                    url: href,
+                    success: function () {
+                        $button.html('<i class="fas fa-download"></i> Download Asset List');
+                        $button.prop('disabled', false);
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Download successful!',
+                            icon: 'success',
+                            timer: 2000
+                        });
+                    }
+                });
+            });
+        });
+
+        function showimgtagging(assetNo, assetSubnumber) {
+            var url = `../Requestor/ASSET_TAGGING?assetNo=${assetNo}&assetSubnumber=${assetSubnumber}`;
+            var modalTitle = `Asset: ${assetNo} - ${assetSubnumber}`;
+            $('#pdfModalTitle').text(modalTitle);
+
+            $.get(url, function (data) {
+                if (data.success === false) {
+                    $('#pdfIframe').attr('src', '');
+                    $('.dataframe').text(data.message);
+                } else {
+                    $('#pdfIframe').attr('src', url);
+                    $('.dataframe').html('<iframe id="pdfIframe" src="' + url + '" frameborder="0" style="width: 100%; height: 500px;"></iframe>');
+                }
+                $('#pdfModal').modal('show');
+            }).fail(function () {
+                $('.dataframe').text('An error occurred while loading the asset tagging information.');
+                $('#pdfModal').modal('show');
+            });
+        }
+
+        function modal_update_tagging(asset_no, asset_subnumber, tagging_status="NO") {
+            $("form#form_update_tagging input[name=asset_no]").val(asset_no);
+            $("form#form_update_tagging input[name=asset_subnumber]").val(asset_subnumber);
+            $("form#form_update_tagging input[name=asset_subnumber]").val(asset_subnumber);
+            $("form#form_update_tagging input[name=tagging_status]").val(tagging_status);
+            $("#modal_update_tagging").modal("show");
+        }
+
+        function print_asset(assetNo, assetSubnumber, department, vendorName, capitalizedOn, nameOwner, costCenter, assetDesc) {
+            const url = `../Export/PRINT_ASSET_LABEL?asset_no=${encodeURIComponent(assetNo)}&asset_subnumber=${encodeURIComponent(assetSubnumber)}&department=${encodeURIComponent(department)}&vendorName=${encodeURIComponent(vendorName)}&capitalizedOn=${encodeURIComponent(capitalizedOn)}&nameOwner=${encodeURIComponent(nameOwner)}&costCenter=${encodeURIComponent(costCenter)}&assetDesc=${encodeURIComponent(assetDesc)}`;
+
+            fetch(url)
+                .then(response => {
+                    if (response.ok) return response.blob();
+                    throw new Error('Network response was not ok.');
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.target = '_blank';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        }
+    </script>
+}

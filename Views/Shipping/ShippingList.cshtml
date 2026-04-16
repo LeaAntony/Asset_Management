@@ -1,0 +1,1791 @@
+﻿@using Microsoft.AspNetCore.Http;
+@using Asset_Management.Function;
+@{
+    string role = ViewBag.role;
+    string sesa_id = ViewBag.sesa_id;
+}
+
+<style>
+    .hero {
+        min-height: 70px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        color: #fff;
+    }
+
+        .hero .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+        }
+
+        .hero .hero-body {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        .hero .hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+    .inner {
+        height: 70px;
+        position: relative;
+    }
+
+    .hero .inner {
+        background: rgba(0,0,0,0.7);
+    }
+
+    .professional-table {
+        font-size: 12px;
+        border-collapse: separate;
+        border-spacing: 0;
+        clip-path: inset(0 round 8px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+        .professional-table thead th {
+            background: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .professional-table tbody td {
+            border: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .professional-table tbody tr:hover {
+            background-color: var(--background-gray);
+        }
+
+        .professional-table th,
+        .professional-table td {
+            box-sizing: border-box;
+            white-space: nowrap;
+        }
+
+    .modal {
+        overflow: auto !important;
+    }
+
+    #loadingSpinner {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+        #loadingSpinner img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+    .box_form_input {
+        background-color: #fcfcfc;
+        border-radius: 5px;
+        box-shadow: 1px 2px 8px 2px rgba(152,152,152,0.7);
+    }
+
+    .smaller-input {
+        height: 20px;
+        padding: 5px;
+        font-size: 10px;
+        line-height: 1;
+    }
+
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 10pt;
+    }
+
+    .dataTables_filter {
+        display: none;
+    }
+
+    table#table_shipping_open tr > td {
+        padding: 5px;
+    }
+
+    table#table_shipping_closed tr > td {
+        padding: 5px;
+    }
+
+    .btn-group-xs > .btn, .btn-xs {
+        padding: .25rem .4rem;
+        font-size: .875rem;
+        line-height: .5;
+        border-radius: .2rem;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .half-underline {
+        flex-grow: 1;
+        text-align: center;
+        margin-left: 15rem;
+    }
+
+    .form-inline {
+        display: flex;
+        align-items: center;
+    }
+
+    .table-container {
+        display: none;
+    }
+
+        .table-container.active {
+            display: block;
+        }
+</style>
+
+<section id="hero" class="hero bg-dark position-relative" style="background: url('@Url.Content("~/images/background/bg-am.jpg")') center center / cover no-repeat fixed;">
+    <div class="inner d-flex justify-content-between align-items-center px-3 py-2 w-100">
+
+        <div>
+        </div>
+
+        <div class="position-absolute top-50 start-50 translate-middle text-center">
+            <h3 class="text-white mb-0">
+                <i class="fa fa-ship text-success"></i>
+                <b>Asset Shipping List</b>
+            </h3>
+        </div>
+
+        <div class="ms-auto">
+        </div>
+
+    </div>
+</section>
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-12 mt-3">
+                <div class="list-card card fade-in">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="row table-container active" id="openTableContainer">
+                                    <div class="col-12">
+                                        <table class="table professional-table align-center nowrap" id="table_shipping_open" style="font-size:8pt; width:100%">
+                                            <thead class="align-middle text-center" style="background: var(--primary-blue); color: white; font-weight: 600;">
+                                                <tr>
+                                                    <th>Request ID</th>
+                                                    <th>Category</th>
+                                                    <th>Request By</th>
+                                                    <th>Request Date</th>
+                                                    <th>Return Date</th>
+                                                    <th>Vendor Name</th>
+                                                    <th>Status</th>
+                                                    <th>Status Remark</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="row table-container" id="closedTableContainer">
+                                    <div class="col-12">
+                                        <table class="table professional-table align-center nowrap" id="table_shipping_closed" style="font-size:8pt; width:100%">
+                                            <thead class="align-middle text-center" style="background: var(--primary-blue); color: white; font-weight: 600;">
+                                                <tr>
+                                                    <th>Request ID</th>
+                                                    <th>Proforma No</th>
+                                                    <th>Category</th>
+                                                    <th>Request By</th>
+                                                    <th>Request Date</th>
+                                                    <th>Return Date</th>
+                                                    <th>Vendor Name</th>
+                                                    <th>Status</th>
+                                                    <th>Status Remark</th>
+                                                    <th>Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div id="loadingSpinner" style="display: none;">
+                <span class="spinner-border spinner-border" role="status" aria-hidden="true"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<select class="form-select" name="status" id="statusSelect" style="width: auto; display: none;">
+    <option value="OPEN">SHIPPING OPEN</option>
+    <option value="CLOSE">SHIPPING CLOSED</option>
+</select>
+
+<div class="modal fade" id="shippingModal" tabindex="-1" role="dialog" aria-labelledby="shippingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5><i class="fas fa-ship mr-2"></i>Create Shipping Data - <span id="modalGatepassNo"></span></h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="currentIdGatepass" />
+
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label for="plantSelect">Select Plant <span class="text-danger">*</span></label>
+                        <select class="form-control" id="plantSelect" required>
+                            <option value="">-- Select Plant --</option>
+                            <option value="JHO">JHO</option>
+                            <option value="BMS 1">BMS 1</option>
+                            <option value="BMS 2">BMS 2</option>
+                            <option value="SDH">SDH</option>
+                            <option value="BRC">BRC</option>
+                            <option value="MRO">MRO</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="shipmentDate">Shipment Date <span class="text-danger">*</span></label>
+                        <input type="date" class="form-control" id="shipmentDate" required />
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-md-6" id="shipmentTypeContainer" style="display: none;">
+                        <label for="shipmentTypeInput">Shipment Type <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="shipmentTypeInput" readonly />
+                    </div>
+                    <div class="col-md-6" id="dhlAwbContainer" style="display: none;">
+                        <label for="dhlAwbInput">DHL AWB</label>
+                        <input type="text" class="form-control" id="dhlAwbInput" placeholder="Enter DHL AWB number" />
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h6><i class="fas fa-boxes mr-2"></i>Asset Selection</h6>
+                        <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
+                            <table class="table professional-table" id="assetTable">
+                                <thead class="bg-info">
+                                    <tr>
+                                        <th width="5%">
+                                            <input type="checkbox" id="selectAllAssets" />
+                                        </th>
+                                        <th>Asset No</th>
+                                        <th>Asset Subnumber</th>
+                                        <th>Asset Description</th>
+                                        <th>HS Code</th>
+                                        <th>Box Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assetTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <button type="button" class="btn btn-primary mt-2" id="createBoxBtn" disabled>
+                            <i class="fas fa-plus mr-2"></i>Create Box
+                        </button>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <h6><i class="fas fa-archive mr-2"></i>Shipping Boxes</h6>
+                        <div class="table-responsive">
+                            <table class="table professional-table" id="boxTable">
+                                <thead class="bg-info">
+                                    <tr>
+                                        <th>Box No</th>
+                                        <th>Asset List</th>
+                                        <th>Dimensions (L×W×H cm)</th>
+                                        <th>Gross Weight (kg)</th>
+                                        <th>Net Weight (kg)</th>
+                                        <th>Box Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="boxTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="saveShippingBtn">
+                    <i class="fas fa-save mr-2"></i>Save
+                </button>
+                <button type="button" class="btn btn-primary" id="exportExcelBtn" style="display: none;">
+                    <i class="fas fa-file-excel mr-2"></i>Export Excel
+                </button>
+                <button type="button" class="btn btn-success" id="submitShippingBtn" style="display: none;">
+                    <i class="fas fa-check mr-2"></i>Submit Shipping
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="createBoxModal" tabindex="-1" role="dialog" aria-labelledby="createBoxModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-cube mr-2"></i>Create New Box</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="createBoxForm">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="boxLength">Length (cm) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="boxLength" step="0.01" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label for="boxWidth">Width (cm) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="boxWidth" step="0.01" required />
+                        </div>
+                        <div class="col-md-4">
+                            <label for="boxHeight">Height (cm) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="boxHeight" step="0.01" required />
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label for="grossWeight">Gross Weight (kg) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="grossWeight" step="0.01" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="netWeight">Net Weight (kg) <span class="text-danger">*</span></label>
+                            <input type="number" class="form-control" id="netWeight" step="0.01" required />
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label>Selected Assets:</label>
+                        <div id="selectedAssetsList" class="border p-2 bg-light">
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-success" id="submitBoxBtn">
+                    <i class="fas fa-check mr-2"></i>Submit Box
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="gatepass_detail_modal" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:80%">
+        <div class="modal-content" id="gatepass_detail_body">
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal_image" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5><i class="fa fa-info-circle mr-2"></i><span id="gatepass_no"></span></h5>
+                <button type="button" class="close text-light" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center my-3">
+                <div class="container-fluid" style="margin-top:-10px">
+                    <table class="table professional-table" id="image_table">
+                        <thead class="bg-info">
+                            <tr>
+                                <th>Asset No</th>
+                                <th>Asset Subnumber</th>
+                                <th>Before Transfer</th>
+                                <th>After Transfer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal_image1" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5><i class="fa fa-info-circle mr-2"></i><span id="gatepass_no1"></span></h5>
+                <button type="button" class="close text-light" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center my-3">
+                <div class="container-fluid" style="margin-top:-10px">
+                    <table class="table professional-table" id="image_table1">
+                        <thead class="bg-info">
+                            <tr>
+                                <th>Asset No</th>
+                                <th>Asset Subnumber</th>
+                                <th>Asset Image</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal_image2" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5><i class="fa fa-info-circle mr-2"></i><span id="gatepass_no2"></span></h5>
+                <button type="button" class="close text-light" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center my-3">
+                <div class="container-fluid" style="margin-top:-10px">
+                    <table class="table professional-table" id="image_table2">
+                        <thead class="bg-info">
+                            <tr>
+                                <th>Asset No</th>
+                                <th>Asset Subnumber</th>
+                                <th>Before Repair</th>
+                                <th>After Repair</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pdf-popup-modal" class="modal fade" tabindex="-1" aria-labelledby="filelabel" aria-hidden="true">
+    <div id="pdf-popup-content" class="modal-dialog modal-xl">
+        <div class="modal-content" style="height:100%">
+            <div class="modal-body">
+                <iframe id="pdf-iframe" src="" style="width: 100%; height: 80vh;"></iframe>
+                <button class="align-middle btn btn-sm btn-secondary" id="close_pdf_popup_btn" style="width:50%; position:relative; left:25%" onclick="closePDF()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+
+    <script>
+        var openTable, closedTable;
+        var loading = "<div class='text-center'><i class='fa fa-4x fa-spinner fa-spin'></i></div>";
+        const user_role = "@role";
+        const user_sesa_id = "@sesa_id";
+        let currentBoxCount = 0;
+        const initial_gatepass_no = "@ViewBag.gatepass_no";
+
+        function copyApprovalLink(gatepass_no) {
+            const baseUrl = window.location.protocol + "//" + window.location.host;
+            const approvalLink = `${baseUrl}/Redirect/GatePassList?gatepass_no=${encodeURIComponent(gatepass_no)}`;
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(approvalLink).then(() => {
+                    Swal.fire({
+                        title: 'Link Copied!',
+                        text: 'Redirect link has been copied to clipboard',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                }).catch(err => {
+                    console.error('Failed to copy: ', err);
+                    fallbackCopyTextToClipboard(approvalLink);
+                });
+            } else {
+                fallbackCopyTextToClipboard(approvalLink);
+            }
+        }
+
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    Swal.fire({
+                        title: 'Link Copied!',
+                        text: 'Redirect link has been copied to clipboard',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false,
+                        toast: true,
+                        position: 'top-end'
+                    });
+                } else {
+                    showLinkModal(text);
+                }
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+                showLinkModal(text);
+            }
+
+            document.body.removeChild(textArea);
+        }
+
+        function showLinkModal(link) {
+            Swal.fire({
+                title: 'Copy Link',
+                html: `<div class="form-group">
+                        <label>Approval Link:</label>
+                        <textarea class="form-control" rows="3" readonly style="font-size: 12px;">${link}</textarea>
+                       </div>
+                       <small class="text-muted">Please copy the link manually</small>`,
+                icon: 'info',
+                confirmButtonText: 'Close',
+                width: '600px'
+            });
+        }
+
+        function printGatepass(id_gatepass) {
+            const url = `@Url.Action("PRINT_GATEPASS_PDF", "Export")?id_gatepass=${id_gatepass}`;
+            window.open(url, '_blank');
+        }
+
+        function openPDF(filename) {
+            var pdfURL = "../WI/" + filename;
+            var iframe = document.getElementById("pdf-iframe");
+            if (iframe) {
+                $("#pdf-popup-modal").modal("show");
+                iframe.src = pdfURL;
+            } else {
+                console.error("iframe element not found");
+            }
+        }
+
+        function closePDF() {
+            $("#pdf-popup-modal").modal("hide");
+            var iframe = document.getElementById("pdf-iframe");
+            iframe.src = "";
+        }
+
+        function downloadFile(filename, type) {
+            if (!filename) {
+                alert("File tidak tersedia");
+                return;
+            }
+
+            let url = '';
+            if (type === 'attach') {
+                url = `../Upload/Proforma/${filename}`;
+            } else if (type === 'support') {
+                url = `../Upload/Proforma/${filename}`;
+            }
+
+            const fileExtension = filename.toLowerCase().split('.').pop();
+            const imageExtensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp'];
+            const pdfExtensions = ['pdf'];
+
+            if (imageExtensions.includes(fileExtension) || pdfExtensions.includes(fileExtension)) {
+                window.open(url, '_blank');
+            } else {
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        }
+
+        $(document).ready(function () {
+            initializeDataTables();
+            initializeShippingModal();
+        });
+
+        function initializeDataTables() {
+            var status = $("select[name=status]").val();
+
+            if (status === "OPEN") {
+                $('#openTableContainer').addClass('active').show();
+                $('#closedTableContainer').removeClass('active').hide();
+                initializeOpenTable();
+            } else {
+                $('#openTableContainer').removeClass('active').hide();
+                $('#closedTableContainer').addClass('active').show();
+                initializeClosedTable();
+            }
+
+            $("select[name=status]").off('change').on('change', function () {
+                initializeDataTables();
+            });
+        }
+
+        function initializeOpenTable() {
+            if (openTable) {
+                openTable.destroy();
+            }
+
+            var openColumns = [
+                {
+                    "data": "gatepass_no",
+                    "className": "align-middle",
+                    "title": "Request ID"
+                },
+                {
+                    "data": "category",
+                    "className": "align-middle text-center",
+                    "title": "Category",
+                    "render": function (data, type, row) {
+                        if (row.category === "FA SALES - WITHOUT DISMANTLING") {
+                            return `${data} (${row.type})`;
+                        } else {
+                            return data;
+                        }
+                    }
+                },
+                { "data": "requestor_name", "className": "align-middle", "title": "Request By" },
+                { "data": "create_date", "className": "align-middle text-center", "title": "Request Date" },
+                { "data": "return_date", "className": "align-middle text-center", "title": "Return Date" },
+                { "data": "vendor_name", "className": "align-middle", "title": "Vendor Name" },
+                {
+                    "data": "status_gatepass",
+                    "className": "align-middle text-center",
+                    "title": "Status",
+                    "render": function (data, type, row) {
+                        var badgeClass = getStatusBadgeClass(data);
+                        return '<span class="badge ' + badgeClass + '">' + data + '</span>';
+                    }
+                },
+                {
+                    "data": "status_remark",
+                    "className": "align-middle text-center",
+                    "render": function (data, type, row) {
+                        if (!data) return '<span class="badge bg-secondary">-</span>';
+
+                        var badgeClass;
+                        var text = data;
+
+                        if (data.includes('Waiting')) {
+                            badgeClass = 'bg-warning text-dark';
+                        }
+                        else if (data.includes('Rejected By')) {
+                            badgeClass = 'bg-danger';
+                        }
+                        else if (data === 'COMPLETED') {
+                            badgeClass = 'bg-success';
+                        }
+                        else {
+                            badgeClass = 'bg-dark';
+                        }
+
+                        return '<span class="badge ' + badgeClass + '" style="white-space: normal; word-wrap: break-word; max-width: 200px; display: inline-block;">' + text + '</span>';
+                    }
+                },
+                {
+                    "data": "id_gatepass",
+                    "title": "Action",
+                    "orderable": false,
+                    render: function (data, type, row) {
+                        return generateActionButtons(data, row, "OPEN");
+                    }
+                }
+            ];
+
+            openTable = $("#table_shipping_open").DataTable({
+                "processing": true,
+                "serverSide": true,
+                "filter": true,
+                "destroy": true,
+                "scrollX": true,
+                "scrollCollapse": true,
+                "autoWidth": false,
+                "ajax": {
+                    "url": "@Url.Action("GET_SHIPPING_LIST")",
+                    "type": "POST",
+                    "datatype": "json",
+                    "data": function (d) {
+                        d.status = "OPEN";
+                    },
+                    "error": function (xhr, error, thrown) {
+                        console.error("Error in AJAX request:", error, thrown);
+                    }
+                },
+                "columns": openColumns,
+                "order": [[6, "desc"]],
+                "columnDefs": [
+                    { "orderable": false, "targets": -1 }
+                ],
+                "initComplete": function(settings, json) {
+                    var wrapper = $('#table_shipping_open').closest('.dataTables_wrapper');
+                    wrapper.css('position', 'relative');
+                    $('#statusSelect').appendTo(wrapper).css('display', 'block');
+
+                    $('#statusSelect').select2({
+                        width: '150px',
+                        minimumResultsForSearch: Infinity
+                    });
+
+                    $('#statusSelect').next('.select2-container').css({
+                        'position': 'absolute',
+                        'top': '0px',
+                        'right': '0px'
+                    }).attr('id', 'statusSelect2');
+
+                    if (initial_gatepass_no && initial_gatepass_no.trim() !== '') {
+                        this.api().search(initial_gatepass_no).draw();
+
+                        $('div.dataTables_filter input').val(initial_gatepass_no);
+
+                        if (window.history && window.history.replaceState) {
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        }
+                    }
+                }
+            });
+        }
+
+        function initializeClosedTable() {
+            if (closedTable) {
+                closedTable.destroy();
+            }
+
+            var closedColumns = [
+                {
+                    "data": "gatepass_no",
+                    "className": "align-middle",
+                    "title": "Request ID"
+                },
+                {
+                    "data": "proforma_no",
+                    "className": "align-middle",
+                    "title": "Proforma No",
+                    "render": function (data, type, row) {
+                        return data ? data : '-';
+                    }
+                },
+                {
+                    "data": "category",
+                    "className": "align-middle text-center",
+                    "title": "Category",
+                    "render": function (data, type, row) {
+                        if (row.category === "FA SALES - WITHOUT DISMANTLING") {
+                            return `${data} (${row.type})`;
+                        } else {
+                            return data;
+                        }
+                    }
+                },
+                { "data": "requestor_name", "className": "align-middle", "title": "Request By" },
+                { "data": "create_date", "className": "align-middle", "title": "Request Date" },
+                { "data": "return_date", "className": "align-middle", "title": "Return Date" },
+                { "data": "vendor_name", "className": "align-middle", "title": "Vendor Name" },
+                {
+                    "data": "status_gatepass",
+                    "className": "align-middle text-center",
+                    "title": "Status",
+                    "render": function (data, type, row) {
+                        var badgeClass = getStatusBadgeClass(data);
+                        return '<span class="badge ' + badgeClass + '">' + data + '</span>';
+                    }
+                },
+                {
+                    "data": "status_remark",
+                    "className": "align-middle text-center",
+                    "render": function (data, type, row) {
+                        if (!data) return '<span class="badge bg-secondary">-</span>';
+
+                        var badgeClass;
+                        var text = data;
+
+                        if (data.includes('Waiting')) {
+                            badgeClass = 'bg-warning text-dark';
+                        }
+                        else if (data.includes('Rejected By')) {
+                            badgeClass = 'bg-danger';
+                        }
+                        else if (data === 'COMPLETED') {
+                            badgeClass = 'bg-success';
+                        }
+                        else {
+                            badgeClass = 'bg-dark';
+                        }
+
+                        return '<span class="badge ' + badgeClass + '" style="white-space: normal; word-wrap: break-word; max-width: 200px; display: inline-block;">' + text + '</span>';
+                    }
+                },
+                {
+                    "data": "id_gatepass",
+                    "title": "Action",
+                    "orderable": false,
+                    render: function (data, type, row) {
+                        return generateActionButtons(data, row, "CLOSE");
+                    }
+                }
+            ];
+
+            closedTable = $("#table_shipping_closed").DataTable({
+                "processing": true,
+                "serverSide": true,
+                "filter": true,
+                "destroy": true,
+                "scrollX": true,
+                "scrollCollapse": true,
+                "autoWidth": false,
+                "ajax": {
+                    "url": "@Url.Action("GET_SHIPPING_LIST")",
+                    "type": "POST",
+                    "datatype": "json",
+                    "data": function (d) {
+                        d.status = "CLOSE";
+                    },
+                    "error": function (xhr, error, thrown) {
+                        console.error("Error in AJAX request:", error, thrown);
+                    }
+                },
+                "columns": closedColumns,
+                "order": [[7, "desc"]],
+                "columnDefs": [
+                    { "orderable": false, "targets": -1 }
+                ],
+                "initComplete": function(settings, json) {
+                    var wrapper = $('#table_shipping_closed').closest('.dataTables_wrapper');
+                    wrapper.css('position', 'relative');
+                    $('#statusSelect').appendTo(wrapper).css('display', 'block');
+
+                    $('#statusSelect').select2({
+                        width: '150px',
+                        minimumResultsForSearch: Infinity
+                    });
+
+                    $('#statusSelect').next('.select2-container').css({
+                        'position': 'absolute',
+                        'top': '0px',
+                        'right': '0px'
+                    }).attr('id', 'statusSelect2');
+
+                    if (initial_gatepass_no && initial_gatepass_no.trim() !== '') {
+                        this.api().search(initial_gatepass_no).draw();
+
+                        $('div.dataTables_filter input').val(initial_gatepass_no);
+
+                        if (window.history && window.history.replaceState) {
+                            window.history.replaceState({}, document.title, window.location.pathname);
+                        }
+                    }
+                }
+            });
+        }
+
+        function getStatusBadgeClass(data) {
+            var badgeClass;
+            if (data === 'OPEN') {
+                badgeClass = 'bg-lime';
+            } else if (data.includes('Waiting')) {
+                badgeClass = 'bg-warning text-dark';
+            } else if (data.includes('REJECT')) {
+                badgeClass = 'bg-danger';
+            } else if (data === 'TRANSFER') {
+                badgeClass = 'bg-cyan';
+            } else if (data === 'RETURN APPROVED') {
+                badgeClass = 'bg-secondary';
+            } else if (data === 'COMPLETED') {
+                badgeClass = 'bg-success';
+            } else {
+                badgeClass = 'bg-dark';
+            }
+            return badgeClass;
+        }
+
+        function generateActionButtons(data, row, status) {
+            let buttonHtml = '';
+            buttonHtml += '<div class="btn-group" role="group">';
+
+            buttonHtml += `<button title="Gate Pass Detail" class="btn btn-info btn-sm me-1" onclick="open_detail('${data}')">
+                <i class="fa fa-info-circle"></i>
+            </button>`;
+
+            if (row.category === "FA SALES - WITHOUT DISMANTLING") {
+                buttonHtml += `<button title="Gate Pass Image" class="btn btn-secondary btn-sm me-1" onclick="gatepass_img('${data}')">
+                    <i class="fa fa-image"></i>
+                </button>`;
+            } else if (row.category === "REPAIR TO VENDOR") {
+                buttonHtml += `<button title="Gate Pass Image" class="btn btn-secondary btn-sm me-1" onclick="repair_img('${data}')">
+                    <i class="fa fa-image"></i>
+                </button>`;
+            } else {
+                buttonHtml += `<button title="Gate Pass Image" class="btn btn-secondary btn-sm me-1" onclick="show_img('${data}')">
+                    <i class="fa fa-image"></i>
+                </button>`;
+            }
+
+            if (status === "OPEN") {
+                buttonHtml += `<button title="Create Shipping Data" class="btn btn-primary btn-sm me-1" onclick='createShippingData("${data}", "${row['gatepass_no']}")'>
+                    <i class='fa fa-plus'></i>
+                </button>`;
+            } else {
+                buttonHtml += `<button title="Export Data" class="btn btn-primary btn-sm me-1" onclick='exportShippingData("${data}", "${row['gatepass_no']}")'>
+                    <i class='fa fa-file-excel'></i>
+                </button>`;
+            }
+
+            buttonHtml += '</div>';
+            return buttonHtml;
+        }
+
+        function open_detail(id_gatepass) {
+            $("div#gatepass_detail_body").html("");
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("GET_GATEPASS_DETAIL", "Requestor")",
+                data: {
+                    id_gatepass: id_gatepass
+                }
+            }).done(function (res) {
+                $("div#gatepass_detail_body").html(res);
+                $("div#gatepass_detail_modal").modal("show");
+            }).fail(function (err) {
+                Swal.fire("Error!", "Failed to load gatepass detail", "error");
+            })
+        }
+
+        function show_img(id_gatepass) {
+            $("div#gatepass_detail_body").html("");
+            $.ajax({
+                url: "@Url.Action("GET_IMG_GATEPASS", "Shipping")",
+                type: 'GET',
+                data: { id_gatepass: id_gatepass },
+                success: function (data) {
+                    var tableContent = '';
+                    $('#gatepass_no').text(data[0].gatepass_no);
+                    data.forEach(function (item) {
+                        tableContent += '<tr>';
+                        tableContent += '<td class="align-middle text-right" style="width:15%">' + item.asset_no + '</td>';
+                        tableContent += '<td class="align-middle text-right" style="width:15%">' + item.asset_subnumber + '</td>';
+                        tableContent += '<td class="align-middle text-center"><img src="../Upload/GatePass/' + item.image_before + '" class="img-fluid" style="max-width: 50%; max-height:50%"></td>';
+                        tableContent += '<td class="align-middle text-center"><img src="../Upload/GatePass/' + item.image_after + '" class="img-fluid" style="max-width: 50%; max-height:50%"></td>';
+                        tableContent += '</tr>';
+                    });
+
+                    if ($.fn.DataTable.isDataTable('#image_table')) {
+                        $('#image_table').DataTable().destroy();
+                    }
+
+                    $('#image_table tbody').html(tableContent);
+
+                    $('#image_table').DataTable({
+                        "initComplete": function (settings, json) {
+                            $('#image_table_length').css('margin-left', '-24rem');
+                            $('#image_table_info').css('margin-left', '-18rem');
+                        }
+                    });
+
+                    $('#modal_image').modal('show');
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching images:', error);
+                    Swal.fire('Error!', 'Failed to load images. Please try again.', 'error');
+                }
+            });
+        }
+
+        function repair_img(id_gatepass) {
+            $.ajax({
+                url: "@Url.Action("GET_IMG_GATEPASS", "Shipping")",
+                type: 'GET',
+                data: { id_gatepass: id_gatepass },
+                success: function (data) {
+                    var tableContent = '';
+                    $('#gatepass_no2').text(data[0].gatepass_no);
+                    data.forEach(function (item) {
+                        tableContent += '<tr>';
+                        tableContent += '<td class="align-middle text-right" style="width:15%">' + item.asset_no + '</td>';
+                        tableContent += '<td class="align-middle text-right" style="width:15%">' + item.asset_subnumber + '</td>';
+                        tableContent += '<td class="align-middle text-center"><img src="../Upload/GatePass/' + item.image_before + '" class="img-fluid" style="max-width: 50%; max-height:50%"></td>';
+                        tableContent += '<td class="align-middle text-center"><img src="../Upload/GatePass/' + item.image_after + '" class="img-fluid" style="max-width: 50%; max-height:50%"></td>';
+                        tableContent += '</tr>';
+                    });
+
+                    if ($.fn.DataTable.isDataTable('#image_table2')) {
+                        $('#image_table2').DataTable().destroy();
+                    }
+
+                    $('#image_table2 tbody').html(tableContent);
+
+                    $('#image_table2').DataTable({
+                        "initComplete": function (settings, json) {
+                            $('#image_table2_length').css('margin-left', '-24rem');
+                            $('#image_table2_info').css('margin-left', '-18rem');
+                        }
+                    });
+
+                    $('#modal_image2').modal('show');
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching images:', error);
+                    Swal.fire('Error!', 'Failed to load images. Please try again.', 'error');
+                }
+            });
+        }
+
+        function gatepass_img(id_gatepass) {
+            $.ajax({
+                url: "@Url.Action("GET_IMG_GATEPASS", "Shipping")",
+                type: 'GET',
+                data: { id_gatepass: id_gatepass },
+                success: function (data) {
+                    var tableContent = '';
+                    $('#gatepass_no1').text(data[0].gatepass_no);
+                    data.forEach(function (item) {
+                        tableContent += '<tr>';
+                        tableContent += '<td class="align-middle text-center" style="width:15%">' + item.asset_no + '</td>';
+                        tableContent += '<td class="align-middle text-center" style="width:15%">' + item.asset_subnumber + '</td>';
+                        tableContent += '<td class="align-middle text-center"><img src="../Upload/GatePass/' + item.image_before + '" class="img-fluid" style="max-width: 50%; max-height:50%"></td>';
+                        tableContent += '</tr>';
+                    });
+
+                    if ($.fn.DataTable.isDataTable('#image_table1')) {
+                        $('#image_table1').DataTable().destroy();
+                    }
+
+                    $('#image_table1 tbody').html(tableContent);
+
+                    $('#image_table1').DataTable({
+                        "initComplete": function (settings, json) {
+                            $('#image_table1_length').css('margin-left', '-24rem');
+                            $('#image_table1_info').css('margin-left', '-18rem');
+                        }
+                    });
+
+                    $('#modal_image1').modal('show');
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching images:', error);
+                    Swal.fire('Error!', 'Failed to load images. Please try again.', 'error');
+                }
+            });
+        }
+
+        function createShippingData(id_gatepass, gatepass_no) {
+            $('#currentIdGatepass').val(id_gatepass);
+            $('#modalGatepassNo').text(gatepass_no);
+
+            resetShippingForm();
+
+            loadShippingData(id_gatepass);
+
+            $('#shippingModal').modal('show');
+        }
+
+        function initializeShippingModal() {
+            $('#selectAllAssets').change(function() {
+                let isChecked = $(this).is(':checked');
+                $('#assetTable tbody input[type="checkbox"]:not(:disabled)').prop('checked', isChecked);
+                updateCreateBoxButton();
+            });
+
+            $(document).on('change', '#assetTable tbody input[type="checkbox"]', function() {
+                updateCreateBoxButton();
+                updateSelectAllCheckbox();
+            });
+
+            $('#createBoxBtn').click(function() {
+                openCreateBoxModal();
+            });
+
+            $('#submitBoxBtn').click(function() {
+                submitBox();
+            });
+
+            $('#saveShippingBtn').click(function() {
+                saveShipping();
+            });
+
+            $('#exportExcelBtn').click(function() {
+                exportShippingExcel();
+            });
+
+            $('#submitShippingBtn').click(function() {
+                submitShipping();
+            });
+        }
+
+        function resetShippingForm() {
+            $('#plantSelect').val('');
+            $('#shipmentDate').val('');
+            $('#shipmentTypeInput').val('');
+            $('#dhlAwbInput').val('');
+            $('#assetTableBody').empty();
+            $('#boxTableBody').empty();
+            $('#selectAllAssets').prop('checked', false);
+            $('#createBoxBtn').prop('disabled', true).show();
+            $('#saveShippingBtn').show();
+            $('#exportExcelBtn').hide();
+            $('#submitShippingBtn').hide();
+            $('#shipmentTypeContainer').hide();
+            $('#dhlAwbContainer').hide();
+
+            window.isDataCompleteInDb = false;
+            currentBoxCount = 0;
+        }
+
+        function loadShippingData(id_gatepass) {
+            $.ajax({
+                url: '@Url.Action("GetShippingData")',
+                type: 'GET',
+                data: { id_gatepass: id_gatepass },
+                success: function(data) {
+                    if (data.shipping_plant) {
+                        $('#plantSelect').val(data.shipping_plant);
+                        $('#plantSelect').prop('disabled', true);
+                    } else if (data.plant) {
+                        $('#plantSelect').val(data.plant);
+                        $('#plantSelect').prop('disabled', false);
+                    }
+
+                    if (data.shipment_date) {
+                        const date = new Date(data.shipment_date);
+                        $('#shipmentDate').val(date.toISOString().split('T')[0]);
+                    }
+
+                    $('#shipmentTypeContainer').show();
+                    $('#dhlAwbContainer').show();
+
+                    if (data.shipment_type) {
+                        $('#shipmentTypeInput').val(data.shipment_type);
+                    }
+
+                    if (data.dhl_awb) {
+                        $('#dhlAwbInput').val(data.dhl_awb);
+                    }
+
+                    window.isDataCompleteInDb = data.is_data_complete_in_db || false;
+
+                    loadCombinedBoxes(id_gatepass);
+
+                    loadShippingAssets(id_gatepass);
+
+                    checkAllAssetsAssigned();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading shipping data:', error);
+                }
+            });
+        }
+
+        function loadCombinedBoxes(id_gatepass) {
+            $.ajax({
+                url: '@Url.Action("GetCombinedBoxes")',
+                type: 'GET',
+                data: { id_gatepass: id_gatepass },
+                success: function(data) {
+                    let html = '';
+                    currentBoxCount = 0;
+                    let hasSavedBoxes = false;
+                    let hasTempBoxes = false;
+
+                    if (data.saved_boxes && data.saved_boxes.length > 0) {
+                        hasSavedBoxes = true;
+
+                        data.saved_boxes.sort((a, b) => {
+                            let aNum = parseInt(a.box_no.replace('Box ', '')) || 0;
+                            let bNum = parseInt(b.box_no.replace('Box ', '')) || 0;
+                            return aNum - bNum;
+                        });
+
+                        data.saved_boxes.forEach(function(box) {
+                            currentBoxCount++;
+                            let assetDisplay = box.asset_count + ' assets';
+                            html += `
+                                <tr>
+                                    <td>${box.box_no}</td>
+                                    <td>${assetDisplay}</td>
+                                    <td class="text-center">${box.length_cm}×${box.width_cm}×${box.height_cm}</td>
+                                    <td class="text-right">${box.gross_weight_kg}</td>
+                                    <td class="text-right">${box.net_weight_kg}</td>
+                                    <td class="text-center">
+                                        <span class="badge badge-success ml-2">Saved</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-danger" onclick="deleteSavedBox(${box.id_box})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                    if (data.temp_boxes && data.temp_boxes.length > 0) {
+                        hasTempBoxes = true;
+
+                        data.temp_boxes.sort((a, b) => {
+                            let aNum = parseInt(a.box_no.replace('Box ', '')) || 0;
+                            let bNum = parseInt(b.box_no.replace('Box ', '')) || 0;
+                            return aNum - bNum;
+                        });
+
+                        data.temp_boxes.forEach(function(box) {
+                            currentBoxCount++;
+                            let assetDisplay = box.asset_list ? box.asset_list.split(',').length + ' assets' : '0 assets';
+                            html += `
+                                <tr>
+                                    <td>${box.box_no}</td>
+                                    <td>${assetDisplay}</td>
+                                    <td class="text-center">${box.length_cm}×${box.width_cm}×${box.height_cm}</td>
+                                    <td class="text-right">${box.gross_weight_kg}</td>
+                                    <td class="text-right">${box.net_weight_kg}</td>
+                                    <td class="text-center">
+                                        <span class="badge badge-info ml-2">Temp</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-danger" onclick="deleteBox(${box.id_temp})">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                    $('#boxTableBody').html(html);
+
+                    $('#createBoxBtn').show();
+                    $('#saveShippingBtn').show();
+
+                    checkAllAssetsAssigned();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading combined boxes:', error);
+                }
+            });
+        }
+
+        function loadShippingAssets(id_gatepass) {
+            $.ajax({
+                url: '@Url.Action("GetShippingAssets")',
+                type: 'GET',
+                data: { id_gatepass: id_gatepass },
+                success: function(data) {
+                    let html = '';
+                    data.forEach(function(asset) {
+                        let isDisabled = asset.is_assigned;
+                        let boxStatus = '';
+                        let badgeClass = '';
+
+                        if (asset.id_box > 0) {
+                            boxStatus = 'Assigned to Box';
+                            badgeClass = 'badge-success';
+                        } else if (asset.is_assigned) {
+                            boxStatus = 'In Temp Box';
+                            badgeClass = 'badge-info';
+                        } else {
+                            boxStatus = 'Not Assigned';
+                            badgeClass = 'badge-warning';
+                        }
+
+                        let hsCodeValue = asset.hs_code ? asset.hs_code.toString() : '';
+
+                        html += `
+                            <tr>
+                                <td>
+                                    <input type="checkbox" class="asset-checkbox"
+                                           data-id="${asset.id_detail}"
+                                           data-asset="${asset.asset_no};${asset.asset_subnumber}"
+                                           ${isDisabled ? 'disabled' : ''} />
+                                </td>
+                                <td class="text-right">${asset.asset_no}</td>
+                                <td class="text-right">${asset.asset_subnumber}</td>
+                                <td>${asset.asset_desc}</td>
+                                <td class="text-center">
+                                    <input type="text" class="form-control form-control-sm hs-code-input"
+                                           style="min-width: 100px;"
+                                           value="${hsCodeValue}"
+                                           data-asset-id="${asset.id_detail}"
+                                           data-asset-no="${asset.asset_no}"
+                                           data-asset-subnumber="${asset.asset_subnumber}"
+                                           placeholder="Enter HS Code" />
+                                </td>
+                                <td class="text-center"><span class="badge ${badgeClass}">${boxStatus}</span></td>
+                            </tr>
+                        `;
+                    });
+                    $('#assetTableBody').html(html);
+
+                    $('.hs-code-input').on('blur', function() {
+                        updateHSCode($(this));
+                    });
+
+                    updateCreateBoxButton();
+                    checkAllAssetsAssigned();
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error loading assets:', error);
+                    Swal.fire('Error!', 'Failed to load assets', 'error');
+                }
+            });
+        }
+
+        function updateCreateBoxButton() {
+            let selectedCount = $('#assetTable tbody input[type="checkbox"]:checked:not(:disabled)').length;
+            $('#createBoxBtn').prop('disabled', selectedCount === 0);
+        }
+
+        function updateSelectAllCheckbox() {
+            let totalEnabled = $('#assetTable tbody input[type="checkbox"]:not(:disabled)').length;
+            let checkedEnabled = $('#assetTable tbody input[type="checkbox"]:checked:not(:disabled)').length;
+
+            $('#selectAllAssets').prop('checked', totalEnabled > 0 && checkedEnabled === totalEnabled);
+        }
+
+        function openCreateBoxModal() {
+            let selectedAssets = [];
+            $('#assetTable tbody input[type="checkbox"]:checked:not(:disabled)').each(function() {
+                let assetInfo = $(this).data('asset');
+                selectedAssets.push(assetInfo);
+            });
+
+            if (selectedAssets.length === 0) {
+                Swal.fire('Warning!', 'Please select at least one asset', 'warning');
+                return;
+            }
+
+            let assetHtml = selectedAssets.map(asset => `<span class="badge badge-info mr-1">${asset}</span>`).join('');
+            $('#selectedAssetsList').html(assetHtml);
+
+            $('#createBoxForm')[0].reset();
+
+            $('#createBoxModal').modal('show');
+        }
+
+        function submitBox() {
+            if (!$('#createBoxForm')[0].checkValidity()) {
+                $('#createBoxForm')[0].reportValidity();
+                return;
+            }
+
+            let selectedAssetIds = [];
+            $('#assetTable tbody input[type="checkbox"]:checked:not(:disabled)').each(function() {
+                selectedAssetIds.push($(this).data('id'));
+            });
+
+            let nextBoxNumber = getNextAvailableBoxNumber();
+
+            let boxData = {
+                id_gatepass: parseInt($('#currentIdGatepass').val()),
+                box_no: `Box ${nextBoxNumber}`,
+                length_cm: parseFloat($('#boxLength').val()),
+                width_cm: parseFloat($('#boxWidth').val()),
+                height_cm: parseFloat($('#boxHeight').val()),
+                gross_weight_kg: parseFloat($('#grossWeight').val()),
+                net_weight_kg: parseFloat($('#netWeight').val()),
+                asset_list: selectedAssetIds.join(',')
+            };
+
+            $.ajax({
+                url: '@Url.Action("CreateTempBox")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(boxData),
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire('Success!', 'Box created successfully', 'success');
+                        $('#createBoxModal').modal('hide');
+
+                        loadShippingAssets($('#currentIdGatepass').val());
+                        loadCombinedBoxes($('#currentIdGatepass').val());
+
+                        $('#submitShippingBtn').hide();
+                    } else {
+                        Swal.fire('Error!', response.message, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error creating box:', error);
+                    Swal.fire('Error!', 'Failed to create box', 'error');
+                }
+            });
+        }
+
+        function getNextAvailableBoxNumber() {
+            let existingBoxNumbers = [];
+
+            $('#boxTableBody tr').each(function() {
+                let boxName = $(this).find('td:first').text().trim();
+                if (boxName.startsWith('Box ')) {
+                    let boxNumber = parseInt(boxName.replace('Box ', ''));
+                    if (!isNaN(boxNumber)) {
+                        existingBoxNumbers.push(boxNumber);
+                    }
+                }
+            });
+
+            existingBoxNumbers.sort((a, b) => a - b);
+
+            let nextNumber = 1;
+            for (let num of existingBoxNumbers) {
+                if (num === nextNumber) {
+                    nextNumber++;
+                } else {
+                    break;
+                }
+            }
+
+            return nextNumber;
+        }
+
+        function deleteBox(id_temp) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This will delete the box and unassign the assets',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteTempBox")',
+                        type: 'POST',
+                        data: { id_temp: id_temp },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Deleted!', 'Box has been deleted', 'success');
+
+                                loadShippingAssets($('#currentIdGatepass').val());
+                                loadCombinedBoxes($('#currentIdGatepass').val());
+                            } else {
+                                Swal.fire('Error!', response.message, 'error');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error deleting box:', error);
+                            Swal.fire('Error!', 'Failed to delete box', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function deleteSavedBox(id_box) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This will delete the saved box and unassign the assets. You will need to save again.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("DeleteSavedBox")',
+                        type: 'POST',
+                        data: { id_box: id_box },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Deleted!', 'Saved box has been deleted', 'success');
+
+                                loadShippingAssets($('#currentIdGatepass').val());
+                                loadCombinedBoxes($('#currentIdGatepass').val());
+                            } else {
+                                Swal.fire('Error!', response.message, 'error');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error deleting saved box:', error);
+                            Swal.fire('Error!', 'Failed to delete saved box', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function updateHSCode(inputElement) {
+            let hsCode = inputElement.val();
+            let assetId = inputElement.data('asset-id');
+            let assetNo = inputElement.data('asset-no');
+            let assetSubnumber = inputElement.data('asset-subnumber');
+
+            $.ajax({
+                url: '@Url.Action("UpdateHSCode")',
+                type: 'POST',
+                data: {
+                    id_detail: assetId,
+                    asset_no: assetNo,
+                    asset_subnumber: assetSubnumber,
+                    hs_code: hsCode
+                },
+                success: function(response) {
+                    if (!response.success) {
+                        Swal.fire('Error!', response.message || 'Failed to update HS Code', 'error');
+                        inputElement.focus();
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error updating HS Code:', error);
+                    Swal.fire('Error!', 'Failed to update HS Code', 'error');
+                }
+            });
+        }
+
+        function saveShipping() {
+            if (!$('#plantSelect').val()) {
+                Swal.fire('Warning!', 'Please select a plant', 'warning');
+                return;
+            }
+
+            if (!$('#shipmentDate').val()) {
+                Swal.fire('Warning!', 'Please select a shipment date', 'warning');
+                return;
+            }
+
+            let shippingData = {
+                id_gatepass: parseInt($('#currentIdGatepass').val()),
+                plant: $('#plantSelect').val(),
+                shipment_date: $('#shipmentDate').val(),
+                shipment_type: $('#shipmentTypeInput').val(),
+                dhl_awb: $('#dhlAwbInput').val()
+            };
+
+            $.ajax({
+                url: '@Url.Action("SaveShipping")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify(shippingData),
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire('Success!', `Shipping data saved successfully. Proforma No: ${response.proforma_no}`, 'success');
+
+                        $('#shipmentTypeContainer').show();
+                        $('#dhlAwbContainer').show();
+
+                        loadShippingData($('#currentIdGatepass').val());
+
+                    } else if (response.requireConfirmation && response.type === 'plant_changed') {
+                        Swal.fire({
+                            title: 'Plant Changed!',
+                            text: response.message + '\n\nExisting shipping boxes will be deleted. Do you want to continue?',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            confirmButtonText: 'Yes, delete and save!',
+                            cancelButtonText: 'Cancel'
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                saveShippingForce(shippingData, true);
+                            }
+                        });
+                    } else {
+                        Swal.fire('Error!', response.message, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error saving shipping:', error);
+                    Swal.fire('Error!', 'Failed to save shipping data', 'error');
+                }
+            });
+        }
+
+        function saveShippingForce(shippingData, forceDelete) {
+            $.ajax({
+                url: '@Url.Action("SaveShippingForce")',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    Model: shippingData,
+                    ForceDelete: forceDelete
+                }),
+                success: function(response) {
+                    if (response.success) {
+                        Swal.fire('Success!', `Shipping data saved successfully. Proforma No: ${response.proforma_no}`, 'success');
+
+                        $('#shipmentTypeContainer').show();
+                        $('#dhlAwbContainer').show();
+
+                        loadShippingData($('#currentIdGatepass').val());
+
+                    } else {
+                        Swal.fire('Error!', response.message, 'error');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error force saving shipping:', error);
+                    Swal.fire('Error!', 'Failed to save shipping data', 'error');
+                }
+            });
+        }
+
+        function submitShipping() {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'This will finalize the shipping and change the gatepass status to Closed',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#28a745',
+                confirmButtonText: 'Yes, submit it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    $.ajax({
+                        url: '@Url.Action("SubmitShipping")',
+                        type: 'POST',
+                        data: { id_gatepass: $('#currentIdGatepass').val() },
+                        success: function(response) {
+                            if (response.success) {
+                                Swal.fire('Success!', 'Shipping submitted successfully', 'success').then(() => {
+                                    $('#shippingModal').modal('hide');
+                                    var currentStatus = $("select[name=status]").val();
+                                    if (currentStatus === "OPEN" && openTable) {
+                                        openTable.ajax.reload();
+                                    } else if (currentStatus === "CLOSE" && closedTable) {
+                                        closedTable.ajax.reload();
+                                    }
+                                });
+                            } else {
+                                Swal.fire('Error!', response.message, 'error');
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error submitting shipping:', error);
+                            Swal.fire('Error!', 'Failed to submit shipping', 'error');
+                        }
+                    });
+                }
+            });
+        }
+
+        function exportShippingExcel() {
+            let id_gatepass = $('#currentIdGatepass').val();
+            let gatepass_no = $('#modalGatepassNo').text();
+
+            Swal.fire({
+                title: 'Export Shipping Data',
+                text: `Are you sure you want to export shipping data for ${gatepass_no}?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                confirmButtonText: 'Yes, Export',
+                cancelButtonText: 'Cancel',
+                showLoaderOnConfirm: true,
+                preConfirm: () => {
+                    return new Promise((resolve) => {
+                        window.location.href = '@Url.Action("ExportShippingData", "Shipping")' + '?id_gatepass=' + id_gatepass;
+
+                        setTimeout(() => {
+                            resolve();
+                        }, 100);
+                    });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Export Started',
+                        text: 'Your Excel file should download shortly.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        function exportShippingData(id_gatepass, gatepass_no) {
+            Swal.fire({
+                title: 'Export Shipping Data',
+                text: `Are you sure you want to export shipping data for ${gatepass_no}?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#007bff',
+                confirmButtonText: 'Yes, Export',
+                cancelButtonText: 'Cancel',
+                showLoaderOnConfirm: true,
+                preConfirm: () => {
+                    return new Promise((resolve) => {
+                        window.location.href = '@Url.Action("ExportShippingData", "Shipping")' + '?id_gatepass=' + id_gatepass;
+
+                        setTimeout(() => {
+                            resolve();
+                        }, 100);
+                    });
+                },
+                allowOutsideClick: () => !Swal.isLoading()
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Export Started',
+                        text: 'Your Excel file should download shortly.',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+            });
+        }
+
+        function checkAllAssetsAssigned() {
+            let totalAssets = $('#assetTable tbody tr').length;
+            let assignedAssets = $('#assetTable tbody input[type="checkbox"]:disabled').length;
+            let hasSavedBoxes = $('#boxTableBody .badge-success').length > 0;
+            let hasTempBoxes = $('#boxTableBody .badge-info').length > 0;
+
+            if (totalAssets > 0 && assignedAssets === totalAssets && hasSavedBoxes && !hasTempBoxes) {
+                $('#exportExcelBtn').show();
+
+                if (window.isDataCompleteInDb === true) {
+                    $('#submitShippingBtn').show();
+                } else {
+                    $('#submitShippingBtn').hide();
+                }
+            } else {
+                $('#submitShippingBtn').hide();
+                $('#exportExcelBtn').hide();
+            }
+        }
+    </script>
+}

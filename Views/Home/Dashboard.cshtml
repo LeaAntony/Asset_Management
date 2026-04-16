@@ -1,0 +1,1432 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering;
+@using Microsoft.AspNetCore.Http;
+@using Asset_Management.Function;
+@{
+    int year = DateTime.Now.Year;
+    int startYear = year;
+    int endYear = year;
+}
+
+<style>
+    .hero {
+        min-height: 70px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        color: #fff;
+    }
+
+        .hero .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+        }
+
+        .hero .hero-body {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        .hero .hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+    .inner {
+        height: 70px;
+        position: relative;
+    }
+
+    .hero .inner {
+        background: rgba(0,0,0,0.7);
+    }
+
+    .professional-table {
+        font-size: 12px;
+        border-collapse: separate;
+        border-spacing: 0;
+        clip-path: inset(0 round 8px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+        .professional-table thead th {
+            background: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            padding: 8px 12px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .professional-table tbody td {
+            border: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .professional-table tbody tr:hover {
+            background-color: var(--background-gray);
+        }
+
+    .card-loading-overlay {
+        position: absolute;
+        inset: 0;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.6);
+        z-index: 10;
+        pointer-events: all;
+    }
+
+        .card-loading-overlay .fa-spinner {
+            font-size: 28px;
+            color: var(--primary-blue);
+        }
+
+    .dashboard-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e9ecef;
+        margin-bottom: 16px;
+        transition: box-shadow 0.3s ease;
+    }
+
+        .dashboard-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+    .main-dashboard-card:hover {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+    }
+
+    .dashboard-card .card-header {
+        background-color: #ffffff;
+        border-bottom: 2px solid var(--light-gray);
+        padding: 20px 24px 16px;
+        border-radius: 12px 12px 0 0;
+    }
+
+    .dashboard-card .card-body {
+        padding: 16px;
+    }
+
+    .chart-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-dark);
+        margin: 0 0 8px 0;
+        line-height: 1.3;
+    }
+
+    .chart-subtitle {
+        font-size: 14px;
+        font-weight: 400;
+        color: var(--text-light);
+        margin: 0 0 20px 0;
+        line-height: 1.4;
+    }
+
+    .section-title {
+        font-size: 24px;
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 8px;
+        text-align: center;
+        position: relative;
+    }
+
+    #dashboardTabs {
+        padding: 0px 0px 16px 0px;
+    }
+
+        #dashboardTabs .nav-link {
+            border: none;
+            border-radius: 6px;
+            padding: 12px 20px;
+            font-weight: 500;
+            color: var(--text-light);
+            transition: all 0.3s ease;
+            margin: 0 2px;
+        }
+
+            #dashboardTabs .nav-link:hover {
+                background-color: var(--background-gray);
+                color: var(--text-dark);
+            }
+
+            #dashboardTabs .nav-link.active {
+                background-color: var(--success) !important;
+                color: white !important;
+                box-shadow: 0 2px 8px rgba(31, 78, 121, 0.3);
+            }
+
+    .chart-container-standard {
+        height: 420px !important;
+        position: relative;
+        padding: 16px 0;
+    }
+
+    .chart-container-wide {
+        height: 480px !important;
+        position: relative;
+        padding: 16px 0;
+    }
+
+    .progress-bar-custom {
+        height: 24px;
+        border-radius: 12px;
+        background: linear-gradient(90deg, var(--light-gray), #ffffff);
+        position: relative;
+        overflow: hidden;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .progress-fill {
+        height: 100%;
+        border-radius: 12px;
+        background: linear-gradient(90deg, var(--success), #8bc34a);
+        transition: width 0.8s ease;
+        position: relative;
+    }
+
+    .progress-text {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-weight: 600;
+        font-size: 11px;
+        color: var(--text-dark);
+        z-index: 2;
+    }
+
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+
+    .filter-section {
+        background-color: #ffffff;
+        padding: 20px 24px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        border: 1px solid #e9ecef;
+    }
+
+        .filter-section select {
+            border: 1px solid #d0d7de;
+            border-radius: 6px;
+            padding: 8px 12px;
+            font-size: 14px;
+            background-color: #ffffff;
+            transition: border-color 0.2s ease;
+        }
+
+            .filter-section select:focus {
+                outline: none;
+                border-color: var(--primary-blue);
+                box-shadow: 0 0 0 3px rgba(31, 78, 121, 0.1);
+            }
+
+    .kpi-card {
+        background: var(--info);
+        color: white;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+        box-shadow: 0 4px 15px rgba(31, 78, 121, 0.2);
+    }
+
+        .kpi-card .kpi-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+            line-height: 1;
+            opacity: 0.95;
+        }
+
+            .kpi-card .kpi-icon i {
+                color: #fff;
+            }
+
+    .kpi-value {
+        font-size: 24px;
+        font-weight: 700;
+        margin-bottom: 8px;
+        line-height: 1;
+    }
+
+    .kpi-label {
+        font-size: 14px;
+        font-weight: 400;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    @@media (max-width: 768px) {
+        .hero {
+            min-height: 110px;
+        }
+
+            .hero .hero-title {
+                font-size: 20px;
+            }
+    }
+
+    @@media screen and (max-width: 768px) {
+        .chart-container-standard,
+        .chart-container-wide {
+            height: 300px !important;
+        }
+
+        .chart-title {
+            font-size: 16px;
+        }
+
+        .section-title {
+            font-size: 20px;
+        }
+
+        .dashboard-card .card-body {
+            padding: 16px;
+        }
+
+        #dashboardTabs .nav-link {
+            padding: 8px 12px;
+            font-size: 14px;
+        }
+    }
+
+    @@media screen and (max-width: 576px) {
+        .chart-title {
+            font-size: 14px;
+        }
+
+        .section-title {
+            font-size: 16px;
+        }
+
+        .dashboard-card .card-body {
+            padding: 12px;
+        }
+
+        #dashboardTabs .nav-link {
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+    }
+</style>
+
+<section id="hero" class="hero bg-dark position-relative" style="background: url('@Url.Content("~/images/background/bg-am.jpg")') center center / cover no-repeat fixed;">
+    <div class="inner d-flex justify-content-between align-items-center px-3 py-2 w-100">
+        <div></div>
+        <div class="position-absolute top-50 start-50 translate-middle text-center">
+            <h3 class="text-white mb-0">
+                <i class="fa fa-chart-bar text-success"></i>
+                <b>Dashboard</b>
+            </h3>
+        </div>
+        <div class="ms-auto"></div>
+    </div>
+</section>
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-12 mt-3">
+                <div class="dashboard-card main-dashboard-card">
+                    <div class="card-body">
+                        <ul class="nav nav-pills justify-content-center" id="dashboardTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="asset-tagging-tab" data-bs-toggle="tab" data-bs-target="#asset-tagging" type="button" role="tab" aria-controls="asset-tagging" aria-selected="true">
+                                    <i class="fas fa-tags"></i> Asset Tagging
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="gatepass-overview-tab" data-bs-toggle="tab" data-bs-target="#gatepass-overview" type="button" role="tab" aria-controls="gatepass-overview" aria-selected="false">
+                                    <i class="fas fa-clipboard-check"></i> Gate Pass Overview
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="gatepass-analysis-tab" data-bs-toggle="tab" data-bs-target="#gatepass-analysis" type="button" role="tab" aria-controls="gatepass-analysis" aria-selected="false">
+                                    <i class="fas fa-chart-line"></i> Gate Pass Analysis
+                                </button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content fade-in" id="dashboardTabContent">
+                            <div class="tab-pane fade show active" id="asset-tagging" role="tabpanel" aria-labelledby="asset-tagging-tab">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="kpi-card">
+                                            <div class="d-flex align-items-center">
+                                                <div class="kpi-icon me-3"><i class="fas fa-cubes"></i></div>
+                                                <div style="text-align: left;">
+                                                    <div class="kpi-value" id="total-assets">-</div>
+                                                    <div class="kpi-label">Total Assets</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="kpi-card" style="background: var(--success);">
+                                            <div class="d-flex align-items-center">
+                                                <div class="kpi-icon me-3"><i class="fas fa-tags"></i></div>
+                                                <div style="text-align: left;">
+                                                    <div class="kpi-value" id="tagged-assets">-</div>
+                                                    <div class="kpi-label">Tagged Assets</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="kpi-card" style="background: var(--warning);">
+                                            <div class="d-flex align-items-center">
+                                                <div class="kpi-icon me-3"><i class="fas fa-times-circle"></i></div>
+                                                <div style="text-align: left;">
+                                                    <div class="kpi-value" id="untagged-assets">-</div>
+                                                    <div class="kpi-label">Untagged Assets</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="kpi-card">
+                                            <div class="d-flex align-items-center">
+                                                <div class="kpi-icon me-3"><i class="fas fa-chart-line"></i></div>
+                                                <div style="text-align: left;">
+                                                    <div class="kpi-value" id="tagging-progress">-</div>
+                                                    <div class="kpi-label">Progress (%)</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="dashboard-card slide-up">
+                                            <div class="card-header">
+                                                <h3 class="chart-title">Asset Tagging Status Overview</h3>
+                                                <p class="chart-subtitle">Current distribution of tagged vs untagged assets across organization</p>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="chart_tagging_ratio" class="chart-container-standard"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="dashboard-card slide-up">
+                                            <div class="card-header">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <div>
+                                                        <h3 class="chart-title">Departments Requiring Attention</h3>
+                                                        <p class="chart-subtitle">Top 3 departments with highest untagged assets</p>
+                                                    </div>
+                                                    <button class="btn btn-outline-info btn-sm" onclick="detail_asset_no_tagging()">
+                                                        <i class="fas fa-info-circle"></i> View Details
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="chart_no_tagging" class="chart-container-standard" style="cursor: pointer;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade-in" id="gatepass-overview" role="tabpanel" aria-labelledby="gatepass-overview-tab">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="dashboard-card">
+                                            <div class="card-header">
+                                                <h3 class="chart-title">Open Gate Pass by Department</h3>
+                                                <p class="chart-subtitle">Currently active gate passes requiring attention</p>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="chart_gp_open" class="chart-container-standard" style="cursor: pointer;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="dashboard-card">
+                                            <div class="card-header">
+                                                <h3 class="chart-title">Gate Pass Completion Status</h3>
+                                                <p class="chart-subtitle">Progress tracking of gate pass completions</p>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="chart_gp_progress" class="chart-container-standard" style="cursor: pointer;"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tab-pane fade-in" id="gatepass-analysis" role="tabpanel" aria-labelledby="gatepass-analysis-tab">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <div class="dashboard-card">
+                                            <div class="card-header">
+                                                <h3 class="chart-title">Gate Pass Repair Summary</h3>
+                                                <p class="chart-subtitle">Overall status of repair-related gate passes</p>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="chart_gp_total" class="chart-container-standard"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="dashboard-card">
+                                            <div class="card-header">
+                                                <h3 class="chart-title">Gate Pass Status Breakdown</h3>
+                                                <p class="chart-subtitle">Detailed status analysis of repair gate passes</p>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="chart_gp_return" class="chart-container-standard"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="dashboard-card">
+                                            <div class="card-header">
+                                                <h3 class="chart-title">Gate Pass Aging Analysis</h3>
+                                                <p class="chart-subtitle">Time-based analysis showing gate pass duration by department</p>
+                                            </div>
+                                            <div class="card-body">
+                                                <div id="chart_gp_aging" class="chart-container-wide"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_detail" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:50%">
+        <div class="modal-content">
+            <div id="body_detail"></div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_asset" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:85%">
+        <div class="modal-content">
+            <div id="body_asset"></div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_dept_gp" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:85%">
+        <div class="modal-content">
+            <div id="body_dept_gp"></div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_gp_progress" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:85%">
+        <div class="modal-content">
+            <div id="body_gp_progress"></div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_gp_detail_aging" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:80%">
+        <div class="modal-content" id="body_gp_detail_aging"></div>
+    </div>
+</div>
+
+<div id="modal_gp_return" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:80%">
+        <div class="modal-content" id="body_gp_return"></div>
+    </div>
+</div>
+
+<div id="modal_gp_detail_total" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:80%">
+        <div class="modal-content" id="body_gp_detail_total"></div>
+    </div>
+</div>
+
+<div id="gatepass_detail_modal" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:80%">
+        <div class="modal-content" id="gatepass_detail_body"></div>
+    </div>
+</div>
+
+<div class="modal fade" id="fa_sales_img" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));">
+                <h5 class="text-white"><i class="fa fa-info-circle mr-2"></i><span id="gatepass_no_img"></span></h5>
+                <button type="button" class="close text-light" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body my-3">
+                <div class="container-fluid" style="margin-top:-20px">
+                    <div class="row my-2">
+                        <div class="col-12">
+                            <table class="table professional-table align-center nowrap" id="image_table1">
+                                <thead>
+                                    <tr>
+                                        <th>Asset No</th>
+                                        <th>Subnumber</th>
+                                        <th>Asset Image</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="repair_image" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));">
+                <h5 class="text-white"><i class="fa fa-info-circle mr-2"></i><span id="gatepass_no"></span></h5>
+                <button type="button" class="close text-light" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body my-3">
+                <div class="container-fluid" style="margin-top:-20px">
+                    <div class="row my-2">
+                        <div class="col-12">
+                            <table class="table professional-table align-center nowrap" id="image_table2">
+                                <thead>
+                                    <tr>
+                                        <th>Asset No</th>
+                                        <th>Subnumber</th>
+                                        <th>Before Repair</th>
+                                        <th>After Repair</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modal_image" tabindex="-1" role="dialog" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));">
+                <h5 class="text-white"><i class="fa fa-info-circle mr-2"></i><span id="gatepass_no"></span></h5>
+                <button type="button" class="close text-light" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body my-3">
+                <div class="container-fluid" style="margin-top:-20px">
+                    <div class="row my-2">
+                        <div class="col-12">
+                            <table class="table professional-table align-center nowrap" id="image_table">
+                                <thead>
+                                    <tr>
+                                        <th>Asset No</th>
+                                        <th>Subnumber</th>
+                                        <th>Before Transfer</th>
+                                        <th>After Transfer</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/adminlte/plugins/chart.js/Chart.min.js"></script>
+    <script src="~/lib/adminlte/plugins/chart.js/chartjs-plugin-datalabels.js"></script>
+    <script src="~/lib/highchart/highcharts.js"></script>
+    <script src="~/lib/adminlte/plugins/select2/js/select2.full.min.js"></script>
+    <script>
+        var table;
+        var loading = "<div class='text-center p-4'><i class='fas fa-spinner fa-spin fa-2x text-primary'></i><p class='mt-2 text-muted'>Loading data...</p></div>";
+
+        const chartColors = {
+            primary: ['#1f4e79', '#4a90b8', '#7bb3d9', '#acd5ea'],
+            success: ['#3DCD58', '#36C156', '#50CC6D', '#67DC82', '#83F39D'],
+            warning: ['#ffd100', '#ffd54f', '#ffeb3b', '#fff176'],
+            danger: ['#B10043', '#FF5C52', '#FF796F', '#FF9F99', '#FFC5C2'],
+            neutral: ['#595959', '#757575', '#9e9e9e', '#e0e0e0']
+        };
+
+        function hexToRgb(hex) {
+            hex = hex.replace('#','');
+            if (hex.length === 3) hex = hex.split('').map(c => c + c).join('');
+            const int = parseInt(hex, 16);
+            return { r: (int >> 16) & 255, g: (int >> 8) & 255, b: int & 255 };
+        }
+
+        function rgbToHex(r, g, b) {
+            return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+        }
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+
+        function buildGradientColors(count, ...stops) {
+            if (!stops || stops.length === 0) return [];
+            if (stops.length === 1 || count <= 1) return [stops[0]];
+
+            const rgbs = stops.map(hexToRgb);
+            const segments = stops.length - 1;
+            const result = [];
+
+            for (let i = 0; i < count; i++) {
+                const t = i / (count - 1);
+                const segPos = t * segments;
+                const segIdx = Math.min(Math.floor(segPos), segments - 1);
+                const localT = segPos - segIdx;
+
+                const s = rgbs[segIdx], e = rgbs[segIdx + 1];
+                const r = Math.round(lerp(s.r, e.r, localT));
+                const g = Math.round(lerp(s.g, e.g, localT));
+                const b = Math.round(lerp(s.b, e.b, localT));
+                result.push(rgbToHex(r, g, b));
+            }
+            return result;
+        }
+
+        const defaultChartConfig = {
+            credits: { enabled: false },
+            chart: {
+                style: {
+                    fontFamily: "'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif"
+                },
+                backgroundColor: 'transparent'
+            },
+            title: {
+                style: {
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    color: '#2c3e50'
+                }
+            },
+            subtitle: {
+                style: {
+                    fontSize: '12px',
+                    color: '#6c757d'
+                }
+            },
+            tooltip: {
+                backgroundColor: '#ffffff',
+                borderColor: '#d0d7de',
+                borderRadius: 8,
+                shadow: true,
+                style: {
+                    fontSize: '12px'
+                }
+            },
+            legend: {
+                itemStyle: {
+                    fontSize: '12px',
+                    fontWeight: '400'
+                }
+            }
+        };
+
+        function ensureLoader($container) {
+            let $overlay = $container.children('.card-loading-overlay');
+            if ($overlay.length === 0) {
+                $overlay = $('<div class="card-loading-overlay"><i class="fas fa-spinner fa-spin"></i></div>');
+                $container.append($overlay);
+            }
+            return $overlay;
+        }
+
+        function showCardLoader(containerId) {
+            const $container = $('#' + containerId);
+            if (!$container.length) return;
+            ensureLoader($container).css('display', 'flex');
+        }
+
+        function hideCardLoader(containerId) {
+            $('#' + containerId + ' > .card-loading-overlay').hide();
+        }
+
+        function showTabLoaders(tabSelector) {
+            const $tab = $(tabSelector);
+            $tab.find('.chart-container-standard, .chart-container-wide').each(function () {
+                ensureLoader($(this)).css('display', 'flex');
+            });
+        }
+
+        function setChartInstance(containerId, chartInstance) {
+            $('#' + containerId).data('hcChart', chartInstance);
+        }
+
+        function destroyChart(containerId) {
+            const $c = $('#' + containerId);
+            const chart = $c.data('hcChart');
+            if (chart && typeof chart.destroy === 'function') {
+                chart.destroy();
+            }
+            $c.removeData('hcChart');
+        }
+
+        function unloadCharts(tabSelector) {
+            const $tab = $(tabSelector);
+            $tab.find('.chart-container-standard, .chart-container-wide').each(function () {
+                const $container = $(this);
+                ensureLoader($container).css('display', 'flex');
+                const existing = $container.data('hcChart');
+                if (existing && typeof existing.destroy === 'function') {
+                    existing.destroy();
+                    $container.removeData('hcChart');
+                }
+                $container.children(':not(.card-loading-overlay)').remove();
+            });
+        }
+
+        $(document).ready(function () {
+            $('.chart-container-standard, .chart-container-wide').each(function () {
+                ensureLoader($(this));
+            });
+
+            $('.slide-up').each(function (index) {
+                $(this).css('animation-delay', (index * 0.1) + 's');
+            });
+
+            showTabLoaders('#asset-tagging');
+            get_chart();
+
+            $('#dashboardTabs button[data-bs-toggle="tab"]').on('show.bs.tab', function (e) {
+                const prevTab = $(e.relatedTarget).attr('data-bs-target');
+                const target = $(e.target).attr('data-bs-target');
+
+                if (prevTab) {
+                    unloadCharts(prevTab);
+                }
+                showTabLoaders(target);
+            });
+
+            $('#dashboardTabs button[data-bs-toggle="tab"]').on('shown.bs.tab', function (e) {
+                const target = $(e.target).attr('data-bs-target');
+                setTimeout(function () {
+                    switch (target) {
+                        case '#asset-tagging':
+                            get_chart();
+                            break;
+                        case '#gatepass-overview':
+                            get_gatepass_overview_charts();
+                            break;
+                        case '#gatepass-analysis':
+                            get_gatepass_analysis_charts();
+                            break;
+                    }
+                }, 50);
+            });
+        });
+
+        function updateKPIs(totalTagging, totalNoTagging) {
+            const total = totalTagging + totalNoTagging;
+            const progress = total > 0 ? ((totalTagging / total) * 100).toFixed(1) : '0.0';
+
+            $('#total-assets').text(total.toLocaleString());
+            $('#tagged-assets').text(totalTagging.toLocaleString());
+            $('#untagged-assets').text(totalNoTagging.toLocaleString());
+            $('#tagging-progress').text(progress + '%');
+        }
+
+        function get_gatepass_overview_charts() {
+            showCardLoader('chart_gp_open');
+            var req1 = $.ajax({
+                url: "@Url.Action("GET_CHART_GATEPASS_OPEN")",
+                type: 'GET',
+                success: function (data) {
+                    const gradientColors = buildGradientColors(data.length, ...chartColors.primary);
+
+                    var chart1 = Highcharts.chart('chart_gp_open', $.extend(true, {}, defaultChartConfig, {
+                        chart: { type: 'bar', height: 420 },
+                        title: { text: null },
+                        legend: { enabled: false },
+                        xAxis: {
+                            type: 'category',
+                            labels: { style: { fontSize: '11px', color: '#6c757d' } },
+                            gridLineColor: '#f0f0f0'
+                        },
+                        yAxis: {
+                            min: 0, title: { text: null }, tickInterval: 1, gridLineColor: '#f0f0f0',
+                            labels: { style: { color: '#6c757d' } }
+                        },
+                        plotOptions: {
+                            bar: {
+                                borderRadius: 4,
+                                dataLabels: { enabled: true, style: { fontSize: '11px', fontWeight: '600' } }
+                            },
+                            series: {
+                                cursor: 'pointer',
+                                point: {
+                                    events: {
+                                        click: function (event) {
+                                            var department = event.point.name;
+                                            $("div#modal_dept_gp").modal("show");
+                                            $.ajax({
+                                                url: '@Url.Action("GP_OPEN_DETAIL")',
+                                                type: 'GET',
+                                                data: { department: department },
+                                                success: function (data) { $('div#body_dept_gp').html(data); },
+                                                error: function (error) { console.log('Error fetching details:', error); }
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        series: [{
+                            name: 'Department',
+                            data: data.map((item, index) => ({
+                                name: item.department,
+                                y: item.total,
+                                color: gradientColors[index]
+                            }))
+                        }]
+                    }));
+                    setChartInstance('chart_gp_open', chart1);
+                }
+            }).always(function(){ hideCardLoader('chart_gp_open'); });
+
+            showCardLoader('chart_gp_progress');
+            var req2 = $.ajax({
+                url: "@Url.Action("GET_CHART_GATEPASS_PROGRESS")",
+                type: 'GET',
+                success: function (data) {
+                    var categories = [], notCompleted = [], completed = [];
+                    data.forEach(function (item) {
+                        categories.push(item.category);
+                        notCompleted.push(item.not_completed);
+                        completed.push(item.completed);
+                    });
+
+                    var chart2 = Highcharts.chart('chart_gp_progress', $.extend(true, {}, defaultChartConfig, {
+                        chart: { type: 'column', height: 420 },
+                        title: { text: null },
+                        xAxis: {
+                            categories: categories, crosshair: true,
+                            labels: { style: { color: '#6c757d' } }
+                        },
+                        yAxis: {
+                            min: 0, title: { text: null }, tickInterval: 5, gridLineColor: '#f0f0f0',
+                            labels: { style: { color: '#6c757d' } }
+                        },
+                        plotOptions: {
+                            column: {
+                                pointPadding: 0.1, borderWidth: 0, borderRadius: 4,
+                                dataLabels: { enabled: true, style: { fontSize: '11px', fontWeight: '600' } }
+                            },
+                            series: {
+                                cursor: 'pointer',
+                                point: {
+                                    events: {
+                                        click: function (event) {
+                                            var status = this.series.name;
+                                            var category = event.point.category;
+                                            $("div#modal_gp_progress").modal("show");
+                                            $.ajax({
+                                                url: '@Url.Action("GP_PROGRESS_DETAIL")',
+                                                type: 'GET',
+                                                data: { status: status, category: category },
+                                                success: function (data) { $('div#body_gp_progress').html(data); },
+                                                error: function (error) { console.log('Error fetching details:', error); }
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        series: [
+                            { name: 'Not Completed', data: notCompleted, color: chartColors.warning[0] },
+                            { name: 'Completed', data: completed, color: chartColors.success[0] }
+                        ]
+                    }));
+                    setChartInstance('chart_gp_progress', chart2);
+                },
+                error: function (error) {
+                    console.log('Error fetching data:', error);
+                }
+            }).always(function(){ hideCardLoader('chart_gp_progress'); });
+
+            return $.when(req1, req2);
+        }
+
+        function get_gatepass_analysis_charts() {
+            showCardLoader('chart_gp_total');
+            var req1 = $.ajax({
+                url: "@Url.Action("CHART_TOTAL_GATEPASS")",
+                type: 'GET',
+                success: function (data) {
+                    var chartData = data.map(function (item) {
+                        return { total_return: item.total_return, not_return: item.not_return };
+                    });
+
+                    var seriesData = [
+                        { name: 'COMPLETE RETURN', y: chartData.reduce((s, i) => s + i.total_return, 0), color: chartColors.success[0] },
+                        { name: 'NOT YET RETURN', y: chartData.reduce((s, i) => s + i.not_return, 0), color: chartColors.warning[0] }
+                    ];
+
+                    var total = seriesData.reduce((s, i) => s + i.y, 0);
+
+                    var chart1 = Highcharts.chart('chart_gp_total', $.extend(true, {}, defaultChartConfig, {
+                        chart: {
+                            type: 'pie', height: 420,
+                            events: {
+                                render: function () {
+                                    var chart = this, renderer = chart.renderer,
+                                        centerX = chart.plotWidth / 2 + chart.plotLeft,
+                                        centerY = chart.plotHeight / 2 + chart.plotTop;
+                                    if (!chart.customLabel) {
+                                        chart.customLabel = renderer.text('Total<br/>' + total.toLocaleString(), centerX, centerY)
+                                            .css({ fontSize: '16px', fontWeight: 'bold', color: '#2c3e50', textAlign: 'center' })
+                                            .attr({ align: 'center', zIndex: 5 })
+                                            .add();
+                                    }
+                                }
+                            }
+                        },
+                        title: { text: null },
+                        plotOptions: {
+                            pie: {
+                                dataLabels: { enabled: true, format: '{point.name}<br/>{point.percentage:.1f}%', style: { fontSize: '12px', fontWeight: '500' } },
+                                center: ['50%', '50%'], size: '75%', innerSize: '45%', borderWidth: 0
+                            },
+                            series: {
+                                cursor: 'pointer',
+                                point: {
+                                    events: {
+                                        click: function () {
+                                            var type = this.name;
+                                            $("div#modal_gp_detail_total").modal("show");
+                                            $.ajax({
+                                                url: '@Url.Action("GET_GP_DETAIL_TOTAL")',
+                                                type: 'GET',
+                                                data: { type: type },
+                                                success: function (data) { $('div#body_gp_detail_total').html(data); },
+                                                error: function (error) { console.log('Error fetching details:', error); }
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        series: [{ name: 'Gate Pass', data: seriesData }]
+                    }));
+                    setChartInstance('chart_gp_total', chart1);
+                },
+                error: function (error) {
+                    console.error('Error fetching data:', error);
+                }
+            }).always(function(){ hideCardLoader('chart_gp_total'); });
+
+            showCardLoader('chart_gp_return');
+            var req2 = $.ajax({
+                url: "@Url.Action("CHART_GATEPASS_RETURN")",
+                type: 'GET',
+                success: function (data) {
+                    const gradientColors = buildGradientColors(4, ...chartColors.primary);
+                    var chart2 = Highcharts.chart('chart_gp_return', $.extend(true, {}, defaultChartConfig, {
+                        chart: { type: 'bar', height: 420 },
+                        title: { text: null },
+                        legend: { enabled: false },
+                        xAxis: {
+                            categories: ['AT SUPPLIER', 'WAITING CONFIRMATION BY REQUESTOR (OVERDUE)', 'WAITING CONFIRMATION BY HOD','WAITING CONFIRMATION BY FIN SS'],
+                            labels: { style: { fontSize: '11px', color: '#6c757d' } }
+                        },
+                        yAxis: { min: 0, title: { text: 'Count' }, tickInterval: 1, gridLineColor: '#f0f0f0' },
+                        plotOptions: {
+                            bar: {
+                                pointPadding: 0.1, borderWidth: 0, borderRadius: 4,
+                                dataLabels: { enabled: true, style: { fontSize: '11px', fontWeight: '600' } }
+                            },
+                            series: {
+                                cursor: 'pointer',
+                                point: {
+                                    events: {
+                                        click: function () {
+                                            var type = this.category;
+                                            $("div#modal_gp_return").modal("show");
+                                            $.ajax({
+                                                url: '@Url.Action("GET_GP_DETAIL_RETURN")',
+                                                type: 'GET',
+                                                data: { type: type },
+                                                success: function (data) { $('div#body_gp_return').html(data); },
+                                                error: function (error) { console.log('Error fetching details:', error); }
+                                            });
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        series: [{
+                            name: 'Count',
+                            data: [
+                                { y: data[0].at_supplier, color: gradientColors[0] },
+                                { y: data[0].waiting_req, color: gradientColors[1] },
+                                { y: data[0].waiting_hod, color: gradientColors[2] },
+                                { y: data[0].waiting_fin, color: gradientColors[3] }
+                            ]
+                        }]
+                    }));
+                    setChartInstance('chart_gp_return', chart2);
+                },
+                error: function (error) { console.log('Error:', error); }
+            }).always(function(){ hideCardLoader('chart_gp_return'); });
+
+            showCardLoader('chart_gp_aging');
+            var req3 = $.ajax({
+                url: "@Url.Action("CHART_GATEPASS_AGING")",
+                type: 'GET',
+                success: function (data) {
+                    var categories = [];
+                    var seriesData = [
+                        { name: '< 30 days', data: [], color: chartColors.success[1] },
+                        { name: '30 - 60 days', data: [], color: chartColors.warning[0] },
+                        { name: 'More than 60 days', data: [], color: chartColors.danger[0] }
+                    ];
+
+                    data.forEach(function (item) {
+                        categories.push(item.dept);
+                        seriesData[0].data.push(item.less30days);
+                        seriesData[1].data.push(item.between30_60);
+                        seriesData[2].data.push(item.morethan60);
+                    });
+
+                    var chart3 = Highcharts.chart('chart_gp_aging', $.extend(true, {}, defaultChartConfig, {
+                        chart: { type: 'bar', height: 480 },
+                        title: { text: null },
+                        xAxis: { categories: categories, title: { text: null }, labels: { style: { color: '#6c757d' } } },
+                        yAxis: { min: 0, title: { text: null }, labels: { overflow: 'justify', style: { color: '#6c757d' } }, tickInterval: 1, gridLineColor: '#f0f0f0' },
+                        plotOptions: {
+                            bar: {
+                                stacking: 'normal',
+                                dataLabels: { enabled: true, style: { fontSize: '10px', fontWeight: '600' } },
+                                borderRadius: 4, cursor: 'pointer',
+                                events: {
+                                    click: function (event) {
+                                        var department = event.point.category;
+                                        var aging_days = event.point.series.name;
+                                        $("div#modal_gp_detail_aging").modal("show");
+                                        $.ajax({
+                                            url: '@Url.Action("GET_GP_DETAIL_AGING")',
+                                            type: 'GET',
+                                            data: { department: department, aging_days: aging_days },
+                                            success: function (data) { $('div#body_gp_detail_aging').html(data); },
+                                            error: function (error) { console.log('Error fetching details:', error); }
+                                        });
+                                    }
+                                }
+                            }
+                        },
+                        series: seriesData
+                    }));
+                    setChartInstance('chart_gp_aging', chart3);
+                },
+                error: function (error) {
+                    console.log('Error fetching data:', error);
+                }
+            }).always(function(){ hideCardLoader('chart_gp_aging'); });
+
+            return $.when(req1, req2, req3);
+        }
+
+        function gatepass_img(id_gatepass) {
+            $.ajax({
+                url: "@Url.Action("GET_IMG_GATEPASS", "Requestor")",
+                type: 'GET',
+                data: { id_gatepass: id_gatepass },
+                success: function (data) {
+                    const list = Array.isArray(data) ? data : (data ? [data] : []);
+                    if (!list.length) { alert('No images found'); return; }
+
+                    $('#gatepass_no_img').text(list[0].gatepass_no || '');
+
+                    const rows = list.map(item => `
+                        <tr>
+                            <td class="align-middle text-center" style="width:15%">${item.asset_no ?? ''}</td>
+                            <td class="align-middle text-center" style="width:15%">${item.asset_subnumber ?? ''}</td>
+                            <td class="align-middle text-center">
+                                <img src="../Upload/GatePass/${item.image_before}" class="img-fluid" style="max-width: 100%; max-height:240px">
+                            </td>
+                        </tr>`).join('');
+
+                    const $tbl = $('#image_table1');
+                    const $modal = $('#fa_sales_img');
+
+                    if ($.fn.DataTable && $.fn.DataTable.isDataTable($tbl)) {
+                        $tbl.DataTable().destroy();
+                    }
+                    $tbl.find('tbody').html(rows);
+
+                    const dt = $.fn.DataTable ? $tbl.DataTable({
+                        ordering: false,
+                        scrollX: true,
+                        scrollCollapse: true,
+                        autoWidth: false,
+                        deferRender: true
+                    }) : null;
+
+                    $modal.off('shown.bs.modal.dt1').on('shown.bs.modal.dt1', function () {
+                        if (dt) dt.columns.adjust();
+                    });
+
+                    $modal.modal('show');
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching images:', error);
+                    alert('Failed to load images. Please try again.');
+                }
+            });
+        }
+
+        function get_chart() {
+            showCardLoader('chart_tagging_ratio');
+            var req1 = $.ajax({
+                type: "GET",
+                url: "@Url.Action("GetTaggingRatio")"
+            }).done(function (res) {
+                updateKPIs(res.totalTagging, res.totalNoTagging);
+
+                var chartA = Highcharts.chart('chart_tagging_ratio', $.extend(true, {}, defaultChartConfig, {
+                    chart: { type: 'pie', height: 420, marginBottom: 50 },
+                    title: { text: null },
+                    plotOptions: {
+                        pie: {
+                            allowPointSelect: true, cursor: 'pointer',
+                            dataLabels: {
+                                enabled: true,
+                                format: '{point.name}<br/>{point.percentage:.1f}%<br/>({point.y:,.0f} assets)',
+                                style: { fontSize: '11px', fontWeight: '500' },
+                                distance: 30, connectorPadding: 5, connectorWidth: 1, softConnector: true
+                            },
+                            showInLegend: true, size: '70%', borderWidth: 0
+                        }
+                    },
+                    series: [{
+                        name: 'Assets',
+                        data: [
+                            { name: 'Tagged Assets', y: res.totalTagging, color: chartColors.success[0] },
+                            { name: 'Untagged Assets', y: res.totalNoTagging, color: chartColors.warning[0] }
+                        ]
+                    }]
+                }));
+                setChartInstance('chart_tagging_ratio', chartA);
+            }).fail(function (err) {
+                console.error("Error fetching tagging ratio:", err);
+            }).always(function(){ hideCardLoader('chart_tagging_ratio'); });
+
+            showCardLoader('chart_no_tagging');
+            var req2 = $.ajax({
+                type: "GET",
+                url: "@Url.Action("GetNoTaggingByDepartment")"
+            }).done(function (res) {
+                const top_labels = res.labels.slice(0, 3);
+                const top_values = res.values.slice(0, 3);
+                const chartData = top_labels.map((label, index) => ({
+                    name: label, y: top_values[index], color: chartColors.warning[index % chartColors.danger.length]
+                }));
+
+                var chartB = Highcharts.chart('chart_no_tagging', $.extend(true, {}, defaultChartConfig, {
+                    chart: { type: 'pie', height: 420, marginBottom: 75 },
+                    title: { text: null },
+                    plotOptions: {
+                        pie: {
+                            allowPointSelect: true, cursor: 'pointer',
+                            dataLabels: { enabled: true, format: '{point.name}<br/>{point.percentage:.1f}%<br/>({point.y} assets)', style: { fontSize: '12px', fontWeight: '500' } },
+                            innerSize: '40%', size: '80%', borderWidth: 0,
+                            events: {
+                                click: function(event) {
+                                    var label = event.point.name;
+                                    $.ajax({
+                                        type: "GET",
+                                        url: "@Url.Action("GetAssetNoTaggingByDepartment")",
+                                        data: { department: label }
+                                    }).done(function (res) {
+                                        $("div#body_asset").html(res);
+                                        $("div#modal_asset").modal("show");
+                                    });
+                                }
+                            }
+                        }
+                    },
+                    series: [{ name: 'Department', data: chartData }]
+                }));
+                setChartInstance('chart_no_tagging', chartB);
+            }).fail(function (err) {
+                console.error("Error fetching no tagging data:", err);
+            }).always(function(){ hideCardLoader('chart_no_tagging'); });
+
+            return $.when(req1, req2);
+        }
+
+        function detail_asset_no_tagging() {
+            $("div#body_detail").html(loading);
+            $("div#modal_detail").modal("show");
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("GetNoTaggingByDepartmentDetail")"
+            }).done(function (res) {
+                $("div#body_detail").html(res);
+            });
+        }
+
+        function repair_img(id_gatepass) {
+            $.ajax({
+                url: "@Url.Action("GET_IMG_GATEPASS", "Requestor")",
+                type: 'GET',
+                data: { id_gatepass: id_gatepass },
+                success: function (data) {
+                    const list = Array.isArray(data) ? data : (data ? [data] : []);
+                    if (!list.length) { alert('No images found'); return; }
+
+                    $('#gatepass_no').text(list[0].gatepass_no || '');
+
+                    const rows = list.map(item => `
+                        <tr>
+                            <td class="align-middle text-center" style="width:15%">${item.asset_no ?? ''}</td>
+                            <td class="align-middle text-center" style="width:15%">${item.asset_subnumber ?? ''}</td>
+                            <td class="align-middle text-center">
+                                <img src="../Upload/GatePass/${item.image_before}" class="img-fluid" style="max-width: 100%; max-height:240px">
+                            </td>
+                            <td class="align-middle text-center">
+                                <img src="../Upload/GatePass/${item.image_after}" class="img-fluid" style="max-width: 100%; max-height:240px">
+                            </td>
+                        </tr>`).join('');
+
+                    const $tbl = $('#image_table2');
+                    const $modal = $('#repair_image');
+
+                    if ($.fn.DataTable && $.fn.DataTable.isDataTable($tbl)) {
+                        $tbl.DataTable().destroy();
+                    }
+                    $tbl.find('tbody').html(rows);
+
+                    const dt = $.fn.DataTable ? $tbl.DataTable({
+                        ordering: false,
+                        scrollX: true,
+                        scrollCollapse: true,
+                        autoWidth: false,
+                        deferRender: true
+                    }) : null;
+
+                    $modal.off('shown.bs.modal.dt2').on('shown.bs.modal.dt2', function () {
+                        if (dt) dt.columns.adjust();
+                    });
+
+                    $modal.modal('show');
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching images:', error);
+                    alert('Failed to load images. Please try again.');
+                }
+            });
+        }
+
+        function show_img(id_gatepass) {
+            $.ajax({
+                url: "@Url.Action("GET_IMG_GATEPASS", "Requestor")",
+                type: 'GET',
+                data: { id_gatepass: id_gatepass },
+                success: function (data) {
+                    const list = Array.isArray(data) ? data : (data ? [data] : []);
+                    if (!list.length) { alert('No images found'); return; }
+
+                    $('#gatepass_no').text(list[0].gatepass_no || '');
+
+                    const rows = list.map(item => `
+                        <tr>
+                            <td class="align-middle text-center" style="width:15%">${item.asset_no ?? ''}</td>
+                            <td class="align-middle text-center" style="width:15%">${item.asset_subnumber ?? ''}</td>
+                            <td class="align-middle text-center">
+                                <img src="../Upload/GatePass/${item.image_before}" class="img-fluid" style="max-width: 100%; max-height:240px">
+                            </td>
+                            <td class="align-middle text-center">
+                                <img src="../Upload/GatePass/${item.image_after}" class="img-fluid" style="max-width: 100%; max-height:240px">
+                            </td>
+                        </tr>`).join('');
+
+                    const $tbl = $('#image_table');
+                    const $modal = $('#modal_image');
+
+                    if ($.fn.DataTable && $.fn.DataTable.isDataTable($tbl)) {
+                        $tbl.DataTable().destroy();
+                    }
+                    $tbl.find('tbody').html(rows);
+
+                    const dt = $.fn.DataTable ? $tbl.DataTable({
+                        ordering: false,
+                        scrollX: true,
+                        scrollCollapse: true,
+                        autoWidth: false,
+                        deferRender: true
+                    }) : null;
+
+                    $modal.off('shown.bs.modal.dt2').on('shown.bs.modal.dt2', function () {
+                        if (dt) dt.columns.adjust();
+                    });
+
+                    $modal.modal('show');
+                },
+                error: function (xhr, status, error) {
+                    console.error('Error fetching images:', error);
+                    alert('Failed to load images. Please try again.');
+                }
+            });
+        }
+
+        function open_detail(id_gatepass) {
+            $("div#gatepass_detail_body").html(loading);
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("GET_GATEPASS_DETAIL", "Requestor")",
+                data: { id_gatepass: id_gatepass }
+            }).done(function (res) {
+                $("div#gatepass_detail_body").html(res);
+                $("div#gatepass_detail_modal").modal("show");
+            }).fail(function (err) {
+                console.error("Error fetching gatepass detail:", err);
+            });
+        }
+
+        $(function () {
+            $('[data-toggle="tooltip"]').tooltip();
+        });
+
+        $(document).on('hidden.bs.modal', '#modal_image, #repair_image, #fa_sales_img, #modal_asset, #modal_dept_gp, #modal_gp_progress, #modal_gp_detail_total, #modal_gp_return, #modal_gp_detail_aging, #gatepass_detail_modal', function () {
+            setTimeout(function () {
+                if ($('.modal.show').length) {
+                    $('body').addClass('modal-open');
+                }
+            }, 10);
+        });
+    </script>
+}

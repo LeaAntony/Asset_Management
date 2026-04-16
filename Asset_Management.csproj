@@ -1,0 +1,43 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+	<ItemGroup>
+		<None Include="wwwroot\lib\bootstrap-select\.github\ISSUE_TEMPLATE.md" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="ClosedXML" Version="0.104.2" />
+		<PackageReference Include="EPPlus" Version="7.0.9" />
+		<PackageReference Include="itext7.pdfhtml" Version="4.0.4" />
+		<PackageReference Include="MailKit" Version="3.1.1" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="2.2.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.OAuth" Version="2.2.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="8.0.8" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+		<PackageReference Include="Select.HtmlToPdf.NetCore" Version="24.1.0" />
+		<PackageReference Include="SixLabors.ImageSharp" Version="3.1.5" />
+		<PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
+		<PackageReference Include="System.Linq.Dynamic.Core" Version="1.4.4" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="wwwroot\Upload\Disposal\" />
+		<Folder Include="wwwroot\Upload\Asset\" />
+		<Folder Include="wwwroot\Upload\GatePass\" />
+		<Folder Include="wwwroot\Upload\GatePass_Non_Asset\" />
+		<Folder Include="wwwroot\Upload\PEB\" />
+		<Folder Include="wwwroot\Upload\PEB_Non_Asset\" />
+		<Folder Include="wwwroot\Upload\Proforma\" />
+		<Folder Include="wwwroot\Upload\Proforma_Non_Asset\" />
+		<Folder Include="wwwroot\Upload\Proforma_Finance\" />
+		<Folder Include="wwwroot\Upload\Proforma_Finance_Non_Asset\" />
+	</ItemGroup>
+
+</Project>

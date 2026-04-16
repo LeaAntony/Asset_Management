@@ -1,0 +1,155 @@
+﻿@using System.Globalization;
+@using Microsoft.AspNetCore.Http;
+@using Asset_Management.Controllers;
+@using Asset_Management.Function;
+@model List<AssetListModel>
+@{
+}
+<style>
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+
+    .badge {
+        font-size: 11px;
+    }
+
+    @@media screen and (max-width: 768px) {
+        .modal-body {
+            padding: 16px;
+        }
+
+        .professional-table {
+            font-size: 11px;
+        }
+
+            .professional-table thead th {
+                padding: 12px 8px;
+                font-size: 10px;
+            }
+
+            .professional-table tbody td {
+                padding: 8px;
+            }
+    }
+
+    @@media screen and (max-width: 576px) {
+        .modal-header {
+            padding: 16px 20px 12px;
+        }
+
+            .modal-header .modal-title {
+                font-size: 16px;
+            }
+
+        .modal-body {
+            padding: 12px;
+        }
+
+        .professional-table {
+            font-size: 10px;
+        }
+
+            .professional-table thead th {
+                padding: 8px 6px;
+                font-size: 9px;
+            }
+
+            .professional-table tbody td {
+                padding: 6px;
+            }
+    }
+</style>
+<div class="modal-header">
+    <h5 class="modal-title"><i class="fas fa-list"></i> Asset No Tagging</h5>
+    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+        <span aria-hidden="true">&times;</span>
+    </button>
+</div>
+<div class="modal-body">
+    <div class="row">
+        <!-- Removed `table-responsive` so only the table area scrolls (handled by DataTables scrollX) -->
+        <div class="col-12">
+            <table class="table table-sm professional-table align-center nowrap" id="table_asset_no_tagging">
+                <thead>
+                    <tr>
+                        <th>Asset No</th>
+                        <th>Subnumber</th>
+                        <th>Class</th>
+                        <th>Department</th>
+                        <th>Plant</th>
+                        <th>Description</th>
+                        <th>Asset Class</th>
+                        <th>Cost Center</th>
+                        <th>Aging Days</th>
+                        <th>Capitalized on</th>
+                        <th>Owner</th>
+                        <th>Current APC</th>
+                        <th>Current BK Value</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model)
+                    {
+                        <tr>
+                            <td class="text-right">@row.asset_no</td>
+                            <td class="text-right">@row.asset_subnumber</td>
+                            <td>@row.asset_class_desc</td>
+                            <td>@row.department</td>
+                            <td>@row.plant</td>
+                            <td>@row.asset_desc</td>
+                            <td class="text-right">@row.asset_class</td>
+                            <td class="text-right">@row.cost_center</td>
+                            <td class="text-center">
+                                @if (row.aging_days_tagging > 7)
+                                {
+                                    <span class="badge bg-danger">@row.aging_days_tagging</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning">@row.aging_days_tagging</span>
+                                }
+                            </td>
+                            <td>@row.capitalized_on</td>
+                            <td>@row.owner</td>
+                            <td>
+                                <div class="currency-container">
+                                    <span class="currency-symbol">$</span>
+                                    <span class="currency-value">@((row.current_apc ?? 0).ToString("N2", CultureInfo.InvariantCulture))</span>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="currency-container">
+                                    <span class="currency-symbol">$</span>
+                                    <span class="currency-value">@((row.curr_bk_val ?? 0).ToString("N2", CultureInfo.InvariantCulture))</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<script>
+    $(function () {
+        const $tbl = $("#table_asset_no_tagging");
+
+        const dt = $tbl.DataTable({
+            scrollX: true,
+            scrollCollapse: true,
+            autoWidth: false,
+            deferRender: true
+        });
+
+        const $modal = $tbl.closest(".modal");
+        $modal.on("shown.bs.modal", function () {
+            dt.columns.adjust();
+        });
+
+        dt.on("init.dt", function () {
+            dt.columns.adjust();
+        });
+    });
+</script>

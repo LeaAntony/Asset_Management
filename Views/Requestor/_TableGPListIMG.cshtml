@@ -1,0 +1,62 @@
+﻿@model List<GatePassModel>
+@using Asset_Management.Function
+
+<div class="modal-body">
+    <div class="row">
+        <div class="col-12 table-responsive">
+            <table class="table professional-table align-center nowrap" id="table_cert" style="font-size:10pt">
+                <thead style="background: var(--primary-blue); color: white; font-weight: 600;">
+                    <tr>
+                        <th>No</th>
+                        <th>Asset No</th>
+                        <th>Asset Subnumber</th>
+                        <th>Upload</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var mat in Model)
+                    {
+                        <tr>
+                            <td class="text-center">@(Model.IndexOf(mat) + 1)</td>
+                            <td class="text-right">@mat.asset_no</td>
+                            <td class="text-right">@mat.asset_subnumber</td>
+                            @if (mat.image_after != null && mat.image_after != "")
+                            {
+                                <td class="text-center">
+                                    <span class="badge bg-success">Completed</span>
+                                </td>
+                            }
+                            else
+                            {
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-primary" onclick='update_image(@mat.id_gatepass, @mat.id_detail, @mat.asset_no, @mat.asset_subnumber)'><i class="fas fa-upload"></i> Upload Image</button>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(function () {
+        const $tbl = $("#table_cert");
+
+        const dt = $tbl.DataTable({
+            deferRender: true,
+            lengthChange: true,
+            ordering: false
+        });
+
+        const $modal = $tbl.closest(".modal");
+        $modal.on("shown.bs.modal", function () {
+            dt.columns.adjust();
+        });
+
+        dt.on("init.dt", function () {
+            dt.columns.adjust();
+        });
+    });
+</script>

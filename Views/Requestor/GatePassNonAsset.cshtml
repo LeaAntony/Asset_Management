@@ -1,0 +1,1051 @@
+﻿@model List<UserDetailModel>
+@using Microsoft.AspNetCore.Http
+
+@{
+    var userDetail = Model.First();
+    var securityList = ViewBag.securityList as List<string>;
+    var uomList = ViewBag.uomList as List<string>;
+    string todayDate = DateTime.Today.ToString("yyyy-MM-dd");
+}
+
+<style>
+    .required {
+        color: red;
+    }
+
+    .asset_suggestion, .hidden {
+        display: none;
+    }
+
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .box_form_input {
+        background-color: #fcfcfc;
+        border-radius: 5px;
+        box-shadow: 1px 2px 8px 2px rgba(152,152,152,0.7);
+    }
+
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 10pt;
+    }
+
+
+    table#table_asset_suggestion tr > td, table#table_asset_suggestion tr > th {
+        padding: 5px;
+    }
+
+    .asset_suggestion {
+        position: absolute;
+        background-color: white;
+        width: 100%;
+        max-height: 200px;
+        overflow: auto;
+        display: none;
+        box-shadow: 0px 7px 20px 1px rgba(0,0,0,0.21);
+        z-index: 1000;
+    }
+
+    table#table_asset_selected tr > td, table#table_asset_selected tr > th {
+        padding: 5px;
+    }
+
+    .data-container {
+        position: relative;
+    }
+
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        font-weight: bold;
+        z-index: 1000;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .modal {
+        overflow: auto !important
+    }
+
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+
+    .dataTables_filter {
+        display: none;
+    }
+
+    .list-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e9ecef;
+        margin-bottom: 16px;
+        transition: box-shadow 0.3s ease;
+    }
+
+        .list-card .card-body {
+            padding: 16px;
+        }
+
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+
+    .hero {
+        min-height: 70px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        color: #fff;
+    }
+
+        .hero .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+        }
+
+        .hero .hero-body {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        .hero .hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+    .inner {
+        height: 70px;
+        position: relative;
+    }
+
+    .hero .inner {
+        background: rgba(0,0,0,0.7);
+    }
+
+    .professional-table {
+        width: 100%;
+        font-size: 12px;
+        border-collapse: separate;
+        border-spacing: 0;
+        clip-path: inset(0 round 8px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+        .professional-table thead th {
+            background: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            padding: 16px 12px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .professional-table tbody td {
+            padding: 12px;
+            border: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .professional-table tbody tr:hover {
+            background-color: var(--background-gray);
+        }
+
+        .professional-table th,
+        .professional-table td {
+            box-sizing: border-box;
+            white-space: nowrap;
+        }
+
+    .table-striped > tbody > tr:nth-of-type(odd),
+    .table-striped > tbody > tr:nth-of-type(even),
+    .dataTable tbody tr.odd,
+    .dataTable tbody tr.even {
+        background-color: #ffffff !important;
+    }
+
+        .dataTable tbody tr.odd > td,
+        .dataTable tbody tr.even > td,
+        .DTFC_Cloned tbody tr.odd > td,
+        .DTFC_Cloned tbody tr.even > td,
+        .table-striped > tbody > tr:nth-of-type(odd) > * {
+            background-color: #ffffff !important;
+            --bs-table-accent-bg: #ffffff !important;
+        }
+
+    #table_asset_selected tbody td {
+        background-color: #ffffff !important;
+    }
+
+    #table_asset_selected thead th,
+    #table_asset_selected tbody tr.search-row td {
+        border: 0;
+        box-shadow: none !important;
+    }
+
+    table.table_form {
+        border-collapse: collapse;
+    }
+
+        table.table_form td {
+            border: 1px solid #ccc;
+            padding: 0;
+        }
+
+        table.table_form input, table.table_form select {
+            border: none;
+            width: 100%;
+            box-sizing: border-box;
+            outline: none;
+            padding: 5px;
+        }
+
+    #level {
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    table.table_form input:focus, table.table_form select:focus {
+        border: 1px solid #007bff;
+    }
+
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-selection {
+        width: 100% !important;
+    }
+
+    .select2-selection__rendered {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .select_family_station_area {
+        max-width: 100%;
+    }
+
+    .hidden {
+        display: none;
+    }
+</style>
+
+<section id="hero" class="hero bg-dark position-relative" style="background: url('@Url.Content("~/images/background/bg-am.jpg")') center center / cover no-repeat fixed;">
+    <div class="inner d-flex justify-content-between align-items-center px-3 py-2 w-100">
+
+        <div>
+        </div>
+
+        <div class="position-absolute top-50 start-50 translate-middle text-center">
+            <h3 class="text-white mb-0">
+                <i class="fa fa-file-alt text-success"></i>
+                <b>Form Non-Asset Transfer</b>
+            </h3>
+        </div>
+
+        <div class="ms-auto">
+        </div>
+
+    </div>
+</section>
+
+<div class="content">
+    <div class="container-fluid hidden">
+        <div class="row">
+            <div class="col-lg-12 mt-3">
+                <div class="list-card card fade-in">
+                    <div class="card-body">
+                        <form enctype="multipart/form-data" id="form_nonasset">
+                            <div class="row pl-4 pr-4">
+                                <div class="col-6" style="display:none;">
+                                    <label>Requestor:</label>
+                                    <input name="create_by" class="form-control" value="@userDetail.sesa_id (@userDetail.name)" readonly />
+                                </div>
+                                <div class="col-6" style="display:none;">
+                                    <label>Create Date:</label>
+                                    <input name="create_date" class="form-control" value="@todayDate" readonly />
+                                </div>
+
+                                <div class="col-6 mt-2">
+                                    <label>Category<span class="required">*</span> :</label>
+                                    <select name="category" id="category" class="form-select" required>
+                                        <option value="EQUIPMENT NON-FIXED ASSET">EQUIPMENT NON-FIXED ASSET</option>
+                                        <option value="EQUIPMENT NON-FIXED ASSET RETURN">EQUIPMENT NON-FIXED ASSET RETURN</option>
+                                    </select>
+                                </div>
+
+                                <div class="col-6 mt-2" id="return_date_container">
+                                    <label>Return Date<span class="required">*</span> :</label>
+                                    <input type="date" id="return_date" name="return_date" class="form-control" required />
+                                </div>
+                            </div>
+
+                            <div class="row pl-4 pr-4 mt-3">
+                                <div class="col-12">
+                                    <button type="button" class="btn btn-primary" id="btn_add_desc"><i class="fas fa-plus"></i> Add Desc Good</button>
+                                </div>
+                            </div>
+
+                            <div class="row pl-4 pr-4 mt-2">
+                                <div class="col-12">
+                                    <label>Items<span class="required">*</span> :</label>
+                                    <table class="professional-table table" id="table_nonasset" style="font-size:10pt">
+                                        <thead>
+                                            <tr>
+                                                <th class="text-center align-middle" style="width:5%">No</th>
+                                                <th class="text-center align-middle">PO No</th>
+                                                <th class="text-center align-middle">Description</th>
+                                                <th class="text-center align-middle">Qty</th>
+                                                <th class="text-center align-middle">UoM</th>
+                                                <th class="text-center align-middle">Unit Price (USD)</th>
+                                                <th class="text-center align-middle">Total Price (USD)</th>
+                                                <th class="text-center align-middle">HS Code<i class="fas fa-info-circle text-xs align-top" data-bs-toggle="tooltip" title="International product code for customs and trade"></i></th>
+                                                <th class="text-center align-middle">Gate Pass Img</th>
+                                                <th class="text-center align-middle">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr><td class="text-center" colspan="10">No Data</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+
+                            <div class="row pl-4 pr-4 mt-3">
+                                <div class="col-6 mt-2">
+                                    <label>Vendor Code & Vendor Name<span class="required">*</span> :</label>
+                                    <select name="vendor_code" id="vendor_code" class="form-control" required>
+                                        <option value="">-- SELECT VENDOR CODE & VENDOR NAME --</option>
+                                    </select>
+                                    <input type="hidden" name="vendor_batam" id="vendor_batam" />
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <label>Vendor Phone :</label>
+                                    <input type="text" name="vendor_phone" id="vendor_phone" class="form-control" readonly />
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <label>Vendor Address :</label>
+                                    <input type="text" name="vendor_address" id="vendor_address" class="form-control" readonly />
+                                </div>
+                                <div class="col-6 mt-2">
+                                    <label>Vendor Email :</label>
+                                    <input type="text" name="vendor_email" id="vendor_email" class="form-control" readonly />
+                                </div>
+                            </div>
+
+                            <div class="row pl-4 pr-4 mt-4 hidden" id="prof_form">
+                                <div class="card" style="background-color:#f8f9fa">
+                                    <div class="card-header">
+                                        <h4>Form Proforma</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row" id="prof_address">
+                                            <div class="col-4 mb-2">
+                                                <label>Attention to<span class="required">*</span> :</label>
+                                                <input type="text" name="prof_attn_to" class="form-control" />
+                                            </div>
+                                            <div class="col-4 mb-2">
+                                                <label>Street<span class="required">*</span> :</label>
+                                                <input type="text" name="prof_street" class="form-control" />
+                                            </div>
+                                            <div class="col-4 mb-2">
+                                                <label>City<span class="required">*</span> :</label>
+                                                <input type="text" name="prof_city" class="form-control" />
+                                            </div>
+                                            <div class="col-4 mb-2">
+                                                <label>Country<span class="required">*</span> :</label>
+                                                <input type="text" name="prof_country" class="form-control" />
+                                            </div>
+                                            <div class="col-4 mb-2">
+                                                <label>Postal Code<span class="required">*</span> :</label>
+                                                <input type="text" name="prof_postal_code" class="form-control" />
+                                            </div>
+                                            <div class="col-4 mb-2">
+                                                <label>Phone Number<span class="required">*</span> :</label>
+                                                <input type="text" name="prof_phone" class="form-control" />
+                                            </div>
+                                            <div class="col-4 mb-2">
+                                                <label>Email<span class="required">*</span> :</label>
+                                                <input type="text" name="prof_email" class="form-control" />
+                                            </div>
+                                            <div class="col-4 mb-2">
+                                                <label>Country of Origin<span class="required">*</span> :</label>
+                                                <input type="text" name="prof_coo" class="form-control" />
+                                                <small class="font-italic">* COO refers to the country where the item was produced.</small>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mt-3">
+                                            <div class="col-6">
+                                                <label>Price/Value (USD) :</label>
+                                                <input name="gross_val" class="form-control" value="0" readonly />
+                                            </div>
+                                        </div>
+
+                                        <div class="row mt-2" id="prof_attach">
+                                            <div class="col-12">
+                                                <span class="text-warning">Total above 2500 USD requires mandatory attachment!</span><br />
+                                            </div>
+                                            <div class="col-6">
+                                                <label>Justification Letter <span class="required">*</span> :</label><br />
+                                                <input type="file" name="file_attach" accept="pdf/*">
+                                            </div>
+                                            <div class="col-6">
+                                                <label>Supporting File (Max. 2 files) :</label><br />
+                                                <input type="file" name="file_support" accept="pdf/*" multiple>
+                                            </div>
+                                            <div class="col-12 mt-2">
+                                                <small>
+                                                    <a href="@Url.Content("~/Template_Justification_Letter.docx")" class="btn btn-sm btn-primary" download>Download Template</a>
+                                                </small>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mt-4" id="prof_ship">
+                                            <div class="col-4">
+                                                <label>Mode of Shipment <span class="required">*</span> :</label><br />
+                                                <input type="radio" name="ship_mode" id="ship_mode_air" value="AIR" />
+                                                <label for="ship_mode_air">AIR</label><br />
+                                                <input type="radio" name="ship_mode" id="ship_mode_sea" value="SEA" />
+                                                <label for="ship_mode_sea">SEA</label><br />
+                                                <input type="radio" name="ship_mode" id="ship_mode_courier" value="Courier" />
+                                                <label for="ship_mode_courier">Courier</label><br />
+                                                <input type="radio" name="ship_mode" id="ship_mode_others" value="Others" />
+                                                <label for="ship_mode_others">Others</label>
+                                            </div>
+                                            <div class="col-4" id="courier_charges">
+                                                <label>Courier Charges <span class="required">*</span> :</label><br />
+                                                <input type="radio" name="charged_by" id="charged_by_jho" value="JHO" disabled />
+                                                <label for="charged_by_jho">JHO</label><br />
+                                                <input type="radio" name="charged_by" id="charged_by_receiver" value="Receiver" disabled />
+                                                <label for="charged_by_receiver">Receiver</label><br />
+                                                <select class="form-select" name="courier_name" disabled>
+                                                    <option value="">-- Select Courier --</option>
+                                                    <option value="DHL">DHL</option>
+                                                    <option value="Fedex">Fedex</option>
+                                                    <option value="Others">Others</option>
+                                                </select>
+                                                <input type="text" class="form-control mt-2" name="courier_acc_no" placeholder="Account No" readonly />
+                                            </div>
+                                            <div class="col-4" id="freight_charges">
+                                                <label>Freight Charges <span class="required">*</span> :</label><br />
+                                                <input type="radio" name="freight_charges" id="freight_collect" value="Freight Collect" />
+                                                <label for="freight_collect">Freight Collect</label><br />
+                                                <input type="radio" name="freight_charges" id="freight_prepaid" value="Freight Prepaid" />
+                                                <label for="freight_prepaid">Freight Prepaid</label>
+                                            </div>
+                                            <div class="col-4" id="incoterms_section" style="display: none;">
+                                                <label>Incoterms <span class="required">*</span> :</label><br />
+                                                <div id="incoterms_collect_options" style="display: none;">
+                                                    <input type="radio" name="incoterms" id="incoterms_fca_factory" value="FCA Factory" />
+                                                    <label for="incoterms_fca_factory">FCA Factory</label>
+                                                    <i class="fas fa-info-circle text-info text-xs align-top" data-bs-toggle="tooltip" title="Recipient assumes transport cost and risk from JHO factory/warehouse"></i><br />
+                                                    <input type="radio" name="incoterms" id="incoterms_fca_port" value="FCA Port Batam" />
+                                                    <label for="incoterms_fca_port">FCA Port Batam</label>
+                                                    <i class="fas fa-info-circle text-info text-xs align-top" data-bs-toggle="tooltip" title="Sender delivers goods at Batam Port, and Recipient takes over cost and risk from there"></i>
+                                                </div>
+                                                <div id="incoterms_prepaid_options" style="display: none;">
+                                                    <input type="radio" name="incoterms" id="incoterms_dap" value="DAP Consignee" />
+                                                    <label for="incoterms_dap">DAP Consignee</label>
+                                                    <i class="fas fa-info-circle text-info text-xs align-top" data-bs-toggle="tooltip" title="Shipper pays delivers good to recipient location, and recipient responsible for import duties (Bea Cukai) & unloading"></i><br />
+                                                    <input type="radio" name="incoterms" id="incoterms_cpt" value="CPT Port" />
+                                                    <label for="incoterms_cpt">CPT Port</label>
+                                                    <i class="fas fa-info-circle text-info text-xs align-top" data-bs-toggle="tooltip" title="Shipper pays to delivery to batam port, Cost freight under shipper, recipient take over risk after goods are handed to the carrier at port of Loading"></i>
+                                                </div>
+                                            </div>
+                                            <div class="col-4 mt-3">
+                                                <label>Invoice Payment <span class="required">*</span> :</label><br />
+                                                <input type="radio" name="invoice_payment" id="to_invoice" value="To Invoice" />
+                                                <label for="to_invoice">To Invoice</label><br />
+                                                <input type="radio" name="invoice_payment" id="foc" value="FOC" />
+                                                <label for="foc">FOC</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row pl-4 pr-4 mt-3">
+                                <div class="col-4" id="security_hide">
+                                    <label>Security Guard<span class="required">*</span> :</label>
+                                    <select type="text" name="security_guard" id="security_guard" class="form-control">
+                                        <option value="">-- SELECT SECURITY GUARD --</option>
+                                        <option value="JHO">JHO</option>
+                                        <option value="BMS 1">BMS 1</option>
+                                        <option value="BMS 2">BMS 2</option>
+                                        <option value="SDH">SDH</option>
+                                        <option value="BRC">BRC</option>
+                                        <option value="MRO">MRO</option>
+                                    </select>
+                                </div>
+                                <div class="col-4" id="shipping_plant_hide" hidden>
+                                    <label>Shipping Plant<span class="required">*</span> :</label>
+                                    <select type="text" name="shipping_plant" id="shipping_plant" class="form-control">
+                                        <option value="">-- SELECT SHIPPING PLANT --</option>
+                                        <option value="JHO">JHO</option>
+                                        <option value="BMS 1">BMS 1</option>
+                                        <option value="BMS 2">BMS 2</option>
+                                        <option value="SDH">SDH</option>
+                                        <option value="BRC">BRC</option>
+                                        <option value="MRO">MRO</option>
+                                    </select>
+                                </div>
+                                <div class="col-4">
+                                    <label>Vehicle No :</label>
+                                    <input type="text" name="vehicle_no" class="form-control" />
+                                </div>
+                                <div class="col-4">
+                                    <label>Driver Name :</label>
+                                    <input type="text" name="driver_name" class="form-control" />
+                                </div>
+                                <div class="col-12 mt-3">
+                                    <label>Remark/Reason<span class="required">*</span> :</label>
+                                    <textarea class="form-control" name="remark" rows="3" required></textarea>
+                                </div>
+                            </div>
+                            <div class="form-group text-center mt-4">
+                                <button name="btn_submit" class="btn btn-success">
+                                    <i class="fa fa-paper-plane"></i> SUBMIT
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal-add-good" class="modal fade" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-plus"></i> Add Desc Good</h5>
+                <button type="button" class="close" data-bs-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-12 mb-2">
+                        <label>PO No<span class="required">*</span> :</label>
+                        <input type="text" class="form-control" id="na_po" />
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label>UoM<span class="required">*</span> :</label>
+                        <select class="form-control" id="na_uom">
+                            <option value=""></option>
+                            @foreach (var uom in uomList)
+                            {
+                                <option>@uom</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label>Qty<span class="required">*</span> :</label>
+                        <input type="number" class="form-control" id="na_qty" min="0" step="0.001" />
+                    </div>
+                    <div class="col-12 mb-2">
+                        <label>Description<span class="required">*</span> :</label>
+                        <input type="text" class="form-control" id="na_desc" />
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label>Price/Value (USD)<span class="required">*</span> :</label>
+                        <input type="number" class="form-control" id="na_price" min="0" step="0.01" />
+                    </div>
+                    <div class="col-6 mb-2">
+                        <label>HS Code (optional)<i class="fas fa-info-circle text-xs align-top" data-bs-toggle="tooltip" title="International product code for customs and trade"></i>:</label>
+                        <input type="number" class="form-control" id="na_hs" maxlength="10" pattern="[0-9]{0,10}" title="Enter up to 10 digits only" />
+                    </div>
+                    <div class="col-12 mb-2">
+                        <label>Gatepass Before Image (png/jpg/jpeg)<span class="required">*</span> :</label>
+                        <input type="file" id="na_img" accept=".png,.jpg,.jpeg" />
+                    </div>
+                    <div class="col-12 mt-4 text-end">
+                        <button type="button" class="btn btn-success" id="btn_save_good"><i class="fas fa-check"></i> Save</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for PDF -->
+<div id="pdf-popup-modal" class="modal fade" tabindex="-1" aria-labelledby="filelabel" aria-hidden="true">
+    <div id="pdf-popup-content" class="modal-dialog modal-xl">
+        <div class="modal-content" style="height:100%">
+            <div class="modal-body">
+                <iframe id="pdf-iframe" src="" style="width: 100%; height: 80vh;"></iframe>
+                <button class="align-middle btn btn-sm btn-secondary" id="close_pdf_popup_btn" style="width:50%; position:relative; left:25%" onclick="closePDF()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let selected_rows = [];
+        var preselectedVendor = '@ViewBag.SelectedVendorCode';
+        if (preselectedVendor && preselectedVendor !== '') {
+            var vendorText = '@ViewBag.SelectedVendorCode' + ' - ' + '@ViewBag.SelectedVendorName';
+            var newOption = new Option(vendorText, preselectedVendor, true, true);
+            $('#vendor_code').append(newOption).trigger('change');
+        }
+
+        function openPDF(filename) {
+            var pdfURL = "../WI/" + filename;
+            $("#pdf-popup-modal").modal("show");
+            var iframe = document.getElementById("pdf-iframe");
+            iframe.src = pdfURL;
+        }
+
+        function closePDF() {
+            $("#pdf-popup-modal").modal("hide");
+            var iframe = document.getElementById("pdf-iframe");
+            iframe.src = "";
+        }
+
+        function loadingComplete() {
+            $(".container-fluid").removeClass("hidden");
+        }
+
+        $(document).ready(function () {
+            $('[data-bs-toggle="tooltip"]').tooltip();
+            $('#vendor_code').select2({
+                placeholder: "Type to search vendor...",
+                allowClear: true,
+                minimumInputLength: 3,
+                ajax: {
+                    url: '@Url.Action("SearchVendor", "Requestor")',
+                    dataType: 'json',
+                    delay: 100,
+                    data: function (params) {
+                        return {
+                            search: params.term,
+                            page: params.page || 1
+                        };
+                    },
+                    processResults: function (data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.items.map(function(item) {
+                                return {
+                                    id: item.vendorCode,
+                                    text: item.vendorCode + ' - ' + item.vendorName
+                                };
+                            }),
+                            pagination: {
+                                more: (params.page * 30) < data.total_count
+                            }
+                        };
+                    },
+                    cache: true
+                }
+            });
+            $('#security_guard').select2({ placeholder: "-- SELECT SECURITY GUARD --", allowClear: true });
+            $('#shipping_plant').select2({ placeholder: "-- SELECT SHIPPING PLANT --", allowClear: true });
+            $('#category').select2({ placeholder: "-- SELECT CATEGORY --" });
+
+            $('#btn_add_desc').click(function () {
+                $('#modal-add-good').modal('show');
+            });
+
+            $("#vendor_code").change(function () {
+                var vendor_code = $(this).val();
+                if (!vendor_code) return;
+                $.get("@Url.Action("GET_VENDOR_DATA_GATEPASS", "Requestor")", { vendor_code })
+                    .done(function (data) {
+                        if (!data) return;
+                        $("#vendor_address").val(data.vendor_address);
+                        $("#vendor_phone").val(data.vendor_phone);
+                        $("#vendor_email").val(data.vendor_email);
+                        $("#vendor_batam").val(data.vendor_batam);
+
+                        const total = parseFloat(($("input[name=gross_val]").val() || "0").replace(/,/g, '')) || 0;
+                        if (data.vendor_batam === "Non Batam") {
+                            $("#prof_form").removeClass("hidden");
+                            $("div#prof_address, div#prof_ship").find("input").attr("required", "required");
+
+                            $("#security_hide").prop("hidden", true);
+                            $("#security_guard").removeAttr("required");
+                            $("#shipping_plant_hide").prop("hidden", false);
+                            $("#shipping_plant").attr("required", "required");
+
+                            if (total > 2500) {
+                                $("input[name=file_attach]").attr("required", "required");
+                            }
+                            else {
+                                $("input[name=file_attach]").removeAttr("required");
+                            }
+                        } else {
+                            $("#prof_form").addClass("hidden");
+                            $("div#prof_address, div#prof_ship").find("input").removeAttr("required");
+                            $("input[name=file_attach]").removeAttr("required");
+
+                            $("#security_hide").prop("hidden", false);
+                            $("#shipping_plant_hide").prop("hidden", true);
+                            $("#shipping_plant").removeAttr("required");
+                        }
+                    });
+            });
+
+            $('#category').change(function() {
+                var selected = $(this).val();
+                if (selected === 'EQUIPMENT NON-FIXED ASSET RETURN') {
+                    $('#return_date_container').show();
+                    $('#return_date').attr('required', true);
+                } else {
+                    $('#return_date_container').hide();
+                    $('#return_date').removeAttr('required');
+                }
+            });
+
+            $('#category').trigger('change');
+
+            $('#btn_save_good').click(function () {
+                const po = $('#na_po').val().trim();
+                const desc = $('#na_desc').val().trim();
+                const qty = parseFloat($('#na_qty').val());
+                const uom = $('#na_uom').val();
+                const price = parseFloat($('#na_price').val());
+                const hs = $('#na_hs').val().replace(/[^0-9]/g, '').substring(0, 10);
+                const img = $('#na_img')[0].files[0];
+
+                if (!po || !desc || !uom || !img || isNaN(qty) || qty <= 0 || isNaN(price) || price < 0) {
+                    const firstEmpty = [$('#na_po'), $('#na_uom'), $('#na_qty'), $('#na_desc'), $('#na_price'), $('#na_img')]
+                        .find(el => !el.val() || (el.attr('type') === 'file' && !img));
+                    if (firstEmpty && firstEmpty.length) { scrollToEl(firstEmpty); }
+                    return;
+                }
+                const validTypes = ['image/png', 'image/jpeg', 'image/jpg'];
+                if (!validTypes.includes(img.type)) { scrollToEl($('#na_img')); return; }
+
+                let fd = new FormData();
+                fd.append("po_or_asset_no", po);
+                fd.append("description", desc);
+                fd.append("qty", qty);
+                fd.append("uom", uom);
+                fd.append("price_value", price);
+                fd.append("asset_img", img);
+                fd.append("hs_code", hs);
+
+                $.ajax({
+                    url: "@Url.Action("ADD_TEMP_GATEPASS_NONASSET", "Requestor")",
+                    type: "POST",
+                    data: fd,
+                    contentType: false,
+                    processData: false
+                }).done(function (res) {
+                    if (res !== "success") { Swal.fire("Error", res, "error"); return; }
+                    $('#modal-add-good').modal('hide');
+                    clearModalInputs();
+                    refresh_list();
+                }).fail(function (err) {
+                    Swal.fire("Error", "Upload Failed -> " + err.responseText, "error");
+                });
+            });
+
+            $('button[name=btn_submit]').on('click', function (e) {
+                e.preventDefault();
+
+                const firstInvalid = findFirstInvalidRequired('#form_nonasset');
+                if (firstInvalid) { scrollToEl(firstInvalid); return; }
+
+                const fd = new FormData();
+                fd.append("category", $('#category').val());
+                fd.append("return_date", $('#return_date').val());
+                fd.append("vendor_code", $('#vendor_code').val());
+                fd.append("vendor_name", $('#vendor_code option:selected').text());
+                fd.append("vendor_address", $('#vendor_address').val());
+                fd.append("vendor_phone", $('#vendor_phone').val());
+                fd.append("vendor_email", $('#vendor_email').val());
+                fd.append("vendor_batam", $('#vendor_batam').val());
+                fd.append("security_guard", $('#security_guard').val());
+                fd.append("shipping_plant", $('#shipping_plant').val());
+                fd.append("vehicle_no", $('input[name=vehicle_no]').val());
+                fd.append("driver_name", $('input[name=driver_name]').val());
+                fd.append("remark", $('textarea[name=remark]').val());
+
+                const vendor_batam = $("#vendor_batam").val();
+                if (vendor_batam === "Non Batam") {
+                    fd.append("prof_attn_to", $('input[name=prof_attn_to]').val());
+                    fd.append("prof_street", $('input[name=prof_street]').val());
+                    fd.append("prof_city", $('input[name=prof_city]').val());
+                    fd.append("prof_country", $('input[name=prof_country]').val());
+                    fd.append("prof_postal_code", $('input[name=prof_postal_code]').val());
+                    fd.append("prof_phone", $('input[name=prof_phone]').val());
+                    fd.append("prof_email", $('input[name=prof_email]').val());
+                    fd.append("prof_coo", $('input[name=prof_coo]').val());
+
+                    const fa = $('input[name=file_attach]')[0].files[0];
+                    if (fa) fd.append("file_attach", fa);
+
+                    const fs = $('input[name=file_support]')[0].files;
+                    if (fs && fs.length > 0) {
+                        for (let i = 0; i < Math.min(fs.length, 2); i++) fd.append("file_support", fs[i]);
+                    }
+
+                    const ship_mode = $('input[name=ship_mode]:checked').val();
+                    const charged_by = $('input[name=charged_by]:checked').val();
+                    const courier_name = $('select[name=courier_name]').val();
+                    const courier_acc_no = $('input[name=courier_acc_no]').val();
+                    const freight = $('input[name=freight_charges]:checked').val();
+                    const incoterms = $('input[name=incoterms]:checked').val();
+                    const inv = $('input[name=invoice_payment]:checked').val();
+
+                    if (ship_mode) fd.append("ship_mode", ship_mode);
+                    if (charged_by) fd.append("charged_by", charged_by);
+                    if (courier_name) fd.append("courier_name", courier_name);
+                    if (courier_acc_no) fd.append("courier_acc_no", courier_acc_no);
+                    if (freight) fd.append("freight_charges", freight);
+                    if (incoterms) fd.append("incoterms", incoterms);
+                    if (inv) fd.append("invoice_payment", inv);
+                }
+
+                Swal.fire({
+                    title: 'Confirm',
+                    text: "Are you sure?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    confirmButtonText: 'Yes!',
+                    cancelButtonText: 'No!',
+                    showLoaderOnConfirm: true,
+                    preConfirm: function () {
+                        return new Promise(function (resolve, reject) {
+                            $.ajax({
+                                url: "@Url.Action("ADD_NEW_GATEPASS_NONASSET", "Requestor")",
+                                type: 'POST',
+                                data: fd,
+                                cache: false,
+                                contentType: false,
+                                processData: false
+                            }).done(function (res) {
+                                if (res && res.startsWith("success;")) {
+                                    const arr = res.split(';');
+                                    const gpNo = (arr.length > 2 ? arr[2] : (arr[1] || ''));
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Done!!',
+                                        html: gpNo
+                                    }).then(function () {
+                                        window.location = "@Url.Action("GatePassNonAssetList")";
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Error!!',
+                                        html: res || "Unknown error",
+                                        width: 800
+                                    });
+                                }
+                                resolve();
+                            }).fail(function (err) {
+                                Swal.fire("Error", "Submit Failed -> " + (err.responseText || err.statusText), "error");
+                                reject();
+                            });
+                        });
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                });
+            });
+
+            refresh_list();
+
+            $("input[name=freight_charges]").change(function () {
+                let freight_charges = $("input[name=freight_charges]:checked").val();
+
+                $("#incoterms_collect_options, #incoterms_prepaid_options").hide();
+                $("input[name=incoterms]").prop('checked', false).removeAttr('required');
+                $("#incoterms_section").show();
+
+                if (freight_charges == "Freight Collect") {
+                    $("#incoterms_collect_options").show();
+                    $("#incoterms_collect_options input[type=radio]").attr('required', 'required');
+                } else if (freight_charges == "Freight Prepaid") {
+                    $("#incoterms_prepaid_options").show();
+                    $("#incoterms_prepaid_options input[type=radio]").attr('required', 'required');
+                }
+            });
+
+            $("input[name=ship_mode]").change(function(){
+                let ship_mode = $("input[name=ship_mode]:checked").val();
+
+                $("input[name=freight_charges]").prop('checked', false);
+                $("input[name=incoterms]").prop('checked', false).removeAttr('required');
+                $("#incoterms_section, #incoterms_collect_options, #incoterms_prepaid_options").hide();
+
+                if (ship_mode == "Courier") {
+                    $("input[name=charged_by]").prop('checked', false).removeAttr("disabled").attr("required","required");
+                    $("#courier_charges").removeAttr("hidden");
+                    $("#freight_charges").removeAttr("hidden");
+                    $("#incoterms_section").removeAttr("hidden");
+                    $("input[name=invoice_payment]").prop('checked', false);
+                    $("#foc").removeAttr("disabled");
+                }
+                else if (ship_mode == "Others") {
+                    $("#courier_charges").attr("hidden","hidden");
+                    $("#freight_charges").attr("hidden","hidden");
+                    $("#incoterms_section").attr("hidden","hidden");
+                    $("input[name=freight_charges]").prop('checked', false);
+                    $("#to_invoice").prop('checked', true);
+                    $("#foc").attr("disabled","disabled");
+                }
+                else {
+                    $("#courier_charges").attr("hidden","hidden");
+                    $("#freight_charges").removeAttr("hidden");
+                    $("#incoterms_section").removeAttr("hidden");
+                    $("input[name=charged_by]").prop('checked', false).attr("disabled", "disabled").removeAttr("required");
+                    $("input[name=invoice_payment]").prop('checked', false);
+                    $("#foc").removeAttr("disabled");
+                }
+                $("input[name=charged_by]").change();
+            });
+
+            $("input[name=charged_by]").change(function () {
+                const charged_by = $("input[name=charged_by]:checked").val();
+
+                if (charged_by === "JHO") {
+                    $("select[name=courier_name]").val("").prop("disabled", true).removeAttr("required");
+                    $("input[name=courier_acc_no]").val("JHO").attr("readonly", "readonly").removeAttr("required");
+                } else if (charged_by === "Receiver") {
+                    $("select[name=courier_name]").val("").prop("disabled", false).attr("required", "required");
+                    $("input[name=courier_acc_no]").val("").removeAttr("readonly").attr("required", "required");
+                } else {
+                    $("select[name=courier_name]").val("").prop("disabled", true).removeAttr("required");
+                    $("input[name=courier_acc_no]").val("").attr("readonly", "readonly").removeAttr("required");
+                }
+            });
+        });
+
+        function clearModalInputs() {
+            $('#na_po').val(''); $('#na_desc').val(''); $('#na_qty').val('');
+            $('#na_uom').val('').trigger('change'); $('#na_price').val('');
+            $('#na_hs').val(''); $('#na_img').val('');
+        }
+
+        function refresh_list() {
+            $.get("@Url.Action("GET_TEMP_GATEPASS_NONASSET", "Requestor")")
+                .done(function (list) {
+                    selected_rows = list || [];
+                    const tbody = $("#table_nonasset tbody");
+                    tbody.empty();
+                    let total = 0; let no = 0;
+                    if (selected_rows.length === 0) {
+                        tbody.append('<tr><td class="text-center" colspan="10">No Data</td></tr>');
+                    } else {
+                        selected_rows.forEach(function (it) {
+                            no++;
+                            const unitPrice = (it.price_value || 0);
+                            const qty = (it.qty || 0);
+                            const totalPrice = unitPrice * qty;
+                            total += totalPrice;
+                            const hs = it.hs_code == null ? "" : it.hs_code;
+                            const img = it.gp_before ? ("../Upload/GatePass_Non_Asset/" + it.gp_before) : "#";
+                            const row = `
+                            <tr>
+                                <td class="text-center align-middle">${no}</td>
+                                <td class="align-middle">${it.po_or_asset_no || ""}</td>
+                                <td class="align-middle">${it.description || ""}</td>
+                                <td class="text-right align-middle">${qty.toLocaleString()}</td>
+                                <td class="text-center align-middle">${it.uom || ""}</td>
+                                <td class="text-right align-middle">${unitPrice.toLocaleString()}</td>
+                                <td class="text-right align-middle">${totalPrice.toLocaleString()}</td>
+                                <td class="text-center align-middle">${hs}</td>
+                                <td class="text-center align-middle">
+                                    ${it.gp_before ? `<a href="${img}" target="_blank">View</a>` : '-'}
+                                </td>
+                                <td class="text-center align-middle">
+                                    <a class="btn btn-sm btn-danger" onclick="del_nonasset(${it.id_temp})"><i class="fa fa-minus"></i></a>
+                                </td>
+                            </tr>`;
+                            tbody.append(row);
+                        });
+                    }
+                    $("input[name=gross_val]").val(total.toLocaleString());
+                    const vendor_batam = $("#vendor_batam").val();
+                    if (total > 2500) {
+                        $("input[name=file_attach]").attr("required", "required"); $("#prof_attach").removeClass("hidden");
+                    }
+                    else { $("input[name=file_attach]").removeAttr("required"); $("#prof_attach").addClass("hidden"); }
+
+                    loadingComplete();
+                });
+        }
+
+        function del_nonasset(id_temp) {
+            $.post("@Url.Action("DELETE_TEMP_GATEPASS_NONASSET", "Requestor")", { id_temp })
+                .done(function (res) {
+                    if (res === "success") { refresh_list(); }
+                    else { Swal.fire("Error", res, "error"); }
+                });
+        }
+
+        function findFirstInvalidRequired(formSelector) {
+            const $form = $(formSelector);
+
+            const seenRadio = new Set();
+            let invalid = null;
+
+            const $fields = $form.find('input[required], select[required], textarea[required]').filter(':visible');
+
+            $fields.each(function () {
+                if (invalid) return false;
+                const $el = $(this);
+                if ($el.is(':disabled')) return;
+
+                if (this.type === 'radio') {
+                    const name = this.name;
+                    if (seenRadio.has(name)) return;
+                    seenRadio.add(name);
+                    if ($form.find(`input[name="${name}"]:visible:checked`).length === 0) {
+                        invalid = $el;
+                        return false;
+                    }
+                } else if (!$el.val()) {
+                    invalid = $el;
+                    return false;
+                }
+            });
+
+            if (!invalid && selected_rows.length === 0) {
+                invalid = $('#btn_add_desc');
+            }
+
+            return invalid;
+        }
+
+        function scrollToEl($el) {
+            const $target = ($el instanceof jQuery) ? $el : $($el);
+            if (!$target || $target.length === 0) return;
+            $('html, body').animate({ scrollTop: $target.offset().top - 100 }, 300);
+            if ($target.is('input,select,textarea')) {
+                $target.focus();
+            }
+        }
+    </script>
+}

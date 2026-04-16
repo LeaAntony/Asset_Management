@@ -1,0 +1,785 @@
+﻿@using Microsoft.AspNetCore.Mvc.Rendering;
+@using Microsoft.AspNetCore.Http;
+@using Asset_Management.Function;
+@{
+    int totalNoTagging = (int)(ViewBag.totalNoTagging ?? 0);
+    int totalNoTaggingWaitingValidation = (int)(ViewBag.totalNoTaggingWaitingValidation ?? 0);
+}
+
+<link href="~/lib/adminlte/plugins/datatables-fixedcolumns/css/fixedColumns.bootstrap4.min.css" rel="stylesheet" />
+
+<style>
+    #loadingSpinner {
+        display: none;
+        position: fixed;
+        z-index: 9999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+        #loadingSpinner img {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+    .box_form_input {
+        background-color: #fcfcfc;
+        border-radius: 5px;
+        box-shadow: 1px 2px 8px 2px rgba(152,152,152,0.7);
+    }
+
+    .smaller-input {
+        height: 20px;
+        padding: 5px;
+        font-size: 10px;
+        line-height: 1;
+        width: 100%;
+    }
+
+    .dataTables_info, .dataTables_paginate, .dataTables_filter {
+        font-size: 12px;
+        color: var(--text-light);
+    }
+
+    .dataTables_filter {
+        display: none; 
+    }
+
+    table#table_asset tr > td {
+        padding: 5px;
+    }
+
+    .btn-group-xs > .btn, .btn-xs {
+        padding: .25rem .4rem;
+        font-size: .875rem;
+        line-height: .5;
+        border-radius: .2rem;
+    }
+
+    .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .asset-list-card {
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e9ecef;
+        margin-bottom: 16px;
+        transition: box-shadow 0.3s ease;
+    }
+
+        .asset-list-card:hover {
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .asset-list-card .card-header {
+            background-color: #ffffff;
+            border-bottom: 2px solid var(--light-gray);
+            padding: 20px 24px 16px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .asset-list-card .card-body {
+            padding: 16px;
+        }
+
+    @@media screen and (max-width: 768px) {
+        .asset-list-card .card-body {
+            padding: 16px;
+        }
+    }
+
+    .kpi-card-split {
+        background: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
+        border: 1px solid #e9ecef;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .kpi-card-split__body {
+        padding: 16px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: var(--kpi-accent, var(--info));
+        color: #fff;
+    }
+
+    .kpi-card-split .kpi-value {
+        font-weight: 800;
+        color: #fff;
+        font-size: 28px;
+        line-height: 1.1;
+    }
+
+    .kpi-card-split__body .kpi-label {
+        color: rgba(255,255,255,0.92);
+        font-weight: 600;
+        letter-spacing: .3px;
+    }
+
+    .kpi-card-split__body small {
+        color: rgba(255,255,255,0.85) !important;
+    }
+
+    .kpi-card-split__body .kpi-icon i {
+        color: rgba(255,255,255,0.9);
+        font-size: 20px;
+    }
+
+    .kpi-card-split__cta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0px 16px;
+        min-height: 36px;
+        background: linear-gradient(rgba(0,0,0,0.12), rgba(0,0,0,0.12)), var(--kpi-accent, var(--info));
+        color: #fff !important;
+        text-decoration: none;
+        border-top: 1px solid rgba(255, 255, 255, 0.45);
+    }
+
+        .kpi-card-split__cta:hover {
+            background: linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.2)), var(--kpi-accent, var(--info));
+        }
+
+    .kpi-card-split__body {
+        flex: 1 1 auto;
+    }
+
+    .kpi-card-split__cta {
+        margin-top: auto;
+    }
+
+    .small-box-footer {
+        color: white !important;
+    }
+
+    .hero {
+        min-height: 70px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        color: #fff;
+    }
+
+        .hero .hero-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.65);
+        }
+
+        .hero .hero-body {
+            position: relative;
+            z-index: 2;
+            width: 100%;
+        }
+
+        .hero .hero-title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.2px;
+        }
+
+    .inner {
+        height: 70px;
+        position: relative;
+    }
+
+    .hero .inner {
+        background: rgba(0,0,0,0.7);
+    }
+
+    .professional-table {
+        font-size: 12px;
+        border-collapse: separate;
+        border-spacing: 0;
+        clip-path: inset(0 round 8px);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        width: 100%;
+    }
+
+        .professional-table thead th {
+            background: var(--primary-blue);
+            color: white;
+            font-weight: 600;
+            padding: 8px 12px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .professional-table tbody td {
+            border: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+
+        .professional-table tbody tr:hover {
+            background-color: var(--background-gray);
+        }
+
+        .professional-table th,
+        .professional-table td {
+            box-sizing: border-box;
+            white-space: nowrap;
+        }
+
+    #table_asset tbody tr.search-row {
+        background-color: #f8f9fa;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+        #table_asset tbody tr.search-row td {
+            border-bottom: 2px solid #dee2e6;
+            background-color: #f8f9fa;
+        }
+
+            #table_asset tbody tr.search-row td input.smaller-input {
+                background-color: #ffffff;
+                border: 1px solid #ced4da;
+            }
+
+    #table_asset.dataTable thead th:nth-child(1),
+    #table_asset.dataTable thead th:nth-child(2),
+    #table_asset.dataTable tbody td:nth-child(1),
+    #table_asset.dataTable tbody td:nth-child(2) {
+        position: sticky;
+        background-color: inherit;
+        z-index: 2;
+    }
+
+    #table_asset.dataTable thead th:nth-child(1),
+    #table_asset.dataTable tbody td:nth-child(1) {
+        left: 0;
+    }
+
+    #table_asset.dataTable thead th:nth-child(2),
+    #table_asset.dataTable tbody td:nth-child(2) {
+        left: 0;
+        box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .table-striped > tbody > tr:nth-of-type(odd),
+    .table-striped > tbody > tr:nth-of-type(even),
+    .dataTable tbody tr.odd,
+    .dataTable tbody tr.even {
+        background-color: #ffffff !important;
+    }
+
+    #table_asset.dataTable tbody tr.odd > td,
+    #table_asset.dataTable tbody tr.even > td,
+    .DTFC_Cloned tbody tr.odd > td,
+    .DTFC_Cloned tbody tr.even > td,
+    #table_asset.table-striped > tbody > tr:nth-of-type(odd) > * {
+        background-color: #ffffff !important;
+        --bs-table-accent-bg: #ffffff !important;
+    }
+
+    #table_asset tbody td {
+        background-color: #ffffff !important;
+    }
+
+    #table_asset thead th,
+    #table_asset tbody tr.search-row td {
+        border: 0;
+        box-shadow: none !important;
+    }
+</style>
+
+<section id="hero" class="hero bg-dark position-relative" style="background: url('@Url.Content("~/images/background/bg-am.jpg")') center center / cover no-repeat fixed;">
+    <div class="inner d-flex justify-content-between align-items-center px-3 py-2 w-100">
+
+        <div>
+        </div>
+
+        <div class="position-absolute top-50 start-50 translate-middle text-center">
+            <h3 class="text-white mb-0">
+                <i class="fa fa-table text-success"></i>
+                <b>Asset List</b>
+            </h3>
+        </div>
+
+        <div class="ms-auto">
+            <div class="dropdown">
+                <button class="btn btn-primary btn-xs dropdown-toggle shadow-sm" type="button" id="wiDropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 20px; padding: 8px 16px;">
+                    <i class="fas fa-book-open me-1 fa-1x"></i><small><b>Work Instructions</b></small>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="wiDropdownMenuButton">
+                    <li><a class="dropdown-item" href="javascript:void(0);" onclick="openPDF('WI Form Print Asset - Requestor Menu.pdf')"><i class="fas fa-print me-2"></i>WI - Print Asset</a></li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<div class="content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-lg-12 mt-3">
+                <div class="asset-list-card fade-in">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-4 mb-2">
+                                <div class="kpi-card-split" style="--kpi-accent: var(--warning);">
+                                    <div class="kpi-card-split__body">
+                                        <div class="d-flex align-items-center w-100">
+                                            <div class="kpi-icon me-3"><i class="fas fa-exclamation"></i></div>
+                                            <div style="text-align: left; margin: 0; padding: 0; line-height: 1;">
+                                                <div class="kpi-value">@totalNoTagging</div>
+                                                <div class="kpi-label">Assets No Tagging</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="javascript:void(0);" class="kpi-card-split__cta" onclick="open_no_tagging()">
+                                        Click here to view details! <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="col-4 mb-2">
+                                <div class="kpi-card-split" style="--kpi-accent: var(--info);">
+                                    <div class="kpi-card-split__body">
+                                        <div class="d-flex align-items-center w-100">
+                                            <div class="kpi-icon me-3"><i class="fas fa-hourglass-start"></i></div>
+                                            <div style="text-align: left; margin: 0; padding: 0; line-height: 1;">
+                                                <div class="kpi-value">@totalNoTaggingWaitingValidation</div>
+                                                <div class="kpi-label">Assets No Tagging</div>
+                                                <small>(Waiting Validation)</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="javascript:void(0);" class="kpi-card-split__cta" onclick="open_waiting_validate()">
+                                        Click here to validate! <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="col-4 mb-2">
+                                <div class="kpi-card-split" style="--kpi-accent: var(--success);">
+                                    <div class="kpi-card-split__body">
+                                        <div class="d-flex align-items-center w-100">
+                                            <div class="kpi-icon me-3"><i class="fas fa-file-upload"></i></div>
+                                            <div style="text-align: left; margin: 0; padding: 0; line-height: 1;">
+                                                <div class="kpi-value">Update</div>
+                                                <div class="kpi-label">Upload Asset List</div>
+                                                <small><a href="~/Template_Asset_List.xlsx" class="text-white" style="text-decoration: underline;">Download Template</a></small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <a href="javascript:void(0);" class="kpi-card-split__cta" onclick="$('#ImportDataModal').modal('show');">
+                                        Click here to upload! <i class="fas fa-arrow-circle-right"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <table class="table professional-table align-center nowrap" id="table_asset" style="font-size:8pt; width:100%">
+                                    <thead class="align-middle text-center">
+                                        <tr>
+                                            <th>Asset No</th>
+                                            <th style="box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);">Subnumber</th>
+                                            <th>Description</th>
+                                            <th>Asset Class</th>
+                                            <th>Cost Center</th>
+                                            <th>CC Desc</th>
+                                            <th>CC Grouping</th>
+                                            <th>CC Plant</th>
+                                            <th>Capitalized on</th>
+                                            <th>APC FY start</th>
+                                            <th>Acquisition</th>
+                                            <th>Retirement</th>
+                                            <th>Transfer</th>
+                                            <th>Current APC</th>
+                                            <th>Dep. FY start</th>
+                                            <th>Dep. for year</th>
+                                            <th>Dep.retir.</th>
+                                            <th>Dep.transfer</th>
+                                            <th>Accumul. dep.</th>
+                                            <th>Bk.val.FY strt</th>
+                                            <th>Curr.bk.val.</th>
+                                            <th>Currency</th>
+                                            <th>Department</th>
+                                            <th>Plant</th>
+                                            <th>Owner</th>
+                                            <th>Tagging Status</th>
+                                            <th>Vendor Name</th>
+                                            <th>Asset Location</th>
+                                            <th>Asset Location Address</th>
+                                            <th>Order ID</th>
+                                            <th>Tagging Image</th>
+                                            <th class="align-middle" rowspan="2">Action</th>
+                                        </tr>
+                                        <tr class="search-row">
+                                            @for (int i = 0; i < 1; i++)
+                                            {
+                                                <th class="search-row" style="position: sticky; left: 0;"><input type="text" class="form-control smaller-input filter_table" target="@i" /></th>
+                                            }
+                                            @for (int i = 1; i < 2; i++)
+                                            {
+                                                <th class="search-row" style="position: sticky; left: 100.6px; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);"><input type="text" class="form-control smaller-input filter_table" target="@i" /></th>
+                                            }
+                                            @for (int i = 2; i < 31; i++)
+                                            {
+                                                <th><input type="text" class="form-control smaller-input filter_table" target="@i" /></th>
+                                            }
+                                        </tr>
+                                    </thead>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Element spinner -->
+            <div id="loadingSpinner" style="display: none;">
+                <span class="spinner-border spinner-border" role="status" aria-hidden="true"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_validation" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:70%">
+        <div class="modal-content">
+            <div id="body_validation">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_tagging" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:70%">
+        <div class="modal-content">
+            <div id="body_tagging">
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="modal_file_tag" class="modal fade">
+    <div class="modal-dialog" role="document" style="min-width:70%">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-import"></i> File/Photo Tagging</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <iframe id="show_file_tag" style="width:100%" height="800"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="ImportDataModal" class="modal fade">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fas fa-file-import"></i> Upload Excel</h5>
+                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form enctype="multipart/form-data" id="form_upload">
+                    <div class="mt-2">
+                        <div class="form-group">
+                            <i class="fas fa-file-excel"></i> <label>  Please upload file with type ".xls" and ".xlsx" </label>
+                            <input type="file" name="FormFile" id="FormFile" accept=".xls,.xlsx" required>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12 mt-2 text-end">
+                            <button class="btn btn-success" name="Insert" type="submit" value="Upload"><i class="fas fa-file-upload"></i> Upload</button>
+                        </div>
+                    </div>
+                </form>
+                <br />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="pdf-popup-modal" class="modal fade" tabindex="-1" aria-labelledby="filelabel" aria-hidden="true">
+    <div id="pdf-popup-content" class="modal-dialog modal-xl">
+        <div class="modal-content" style="height:100%">
+            <div class="modal-body">
+                <iframe id="pdf-iframe" src="" style="width: 100%; height: 80vh;"></iframe>
+                <button class="align-middle btn btn-sm btn-secondary" id="close_pdf_popup_btn" style="width:50%; position:relative; left:25%" onclick="closePDF()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/adminlte/plugins/datatables-fixedcolumns/js/dataTables.fixedColumns.min.js"></script>
+
+    <script>
+        var table;
+        var loading = "<div class='text-center'><i class='fa fa-4x fa-spinner fa-spin'></i></div>";
+
+        $(document).ready(function () {
+            table = $("#table_asset").DataTable({
+                "orderCellsTop": true,
+                "processing": true,
+                "serverSide": true,
+                "filter": true,
+                "scrollX": true,
+                "scrollCollapse": true,
+                "fixedColumns": true,
+                "fixedColumns": { leftColumns: 2 },
+                "autoWidth": false,
+                "columnDefs": [
+                    { targets: [0, 1, 3, 4], className: 'text-right' },
+                    { targets: [9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20], render: function (data, type, row) {
+                        var dataValue = parseFloat(data) || 0;
+                        return '<div class="currency-container"><span class="currency-symbol">$</span><span class="currency-value">' + dataValue.toLocaleString() + '</span></div>';
+                    } }
+                ],
+                "ajax": {
+                    "url": "@Url.Action("GetAssetList")",
+                    "type": "POST",
+                    "datatype": "json"
+                },
+                "columns": [
+                    { "data": "asset_no" },
+                    { "data": "asset_subnumber" },
+                    { "data": "asset_desc" },
+                    { "data": "asset_class" },
+                    { "data": "cost_center" },
+                    { "data": "cc_desc" },
+                    { "data": "cc_grouping" },
+                    { "data": "cc_plant" },
+                    { "data": "capitalized_on", "className": "align-middle text-center" },
+                    { "data": "apc_fy_start" },
+                    { "data": "acquisition" },
+                    { "data": "retirement" },
+                    { "data": "transfer" },
+                    { "data": "current_apc" },
+                    { "data": "dep_fy_start" },
+                    { "data": "dep_for_year" },
+                    { "data": "dep_retir" },
+                    { "data": "dep_transfer" },
+                    { "data": "accumul_dep" },
+                    { "data": "bk_val_fy" },
+                    { "data": "curr_bk_val" },
+                    { "data": "currency" },
+                    { "data": "department" },
+                    { "data": "plant" },
+                    { "data": "name_owner" },
+                    { "data": "tagging_status",
+                      "className": "align-middle text-center",
+                        render: function (data, type, row) {
+                            if (data == "YES" && row["file_tag"]!==null) {
+                                return data + " <a href='javascript:void(0);' onclick='open_file_tagging(`"+row['file_tag']+"`)'><i class='fas fa-file-image'></a></a>"
+                            }
+                            else{
+                                return data;
+                            }
+                        } },
+                    { "data": "vendor_name" },
+                    { "data": "asset_location" },
+                    { "data": "asset_location_address" },
+                    {
+                        "data": "filename_doc",
+                        "className": "align-middle text-center",
+                        render: function (data, type, row) {
+                            if (data == 'null' || data == '' || data == null) {
+                                return ''
+                            } else {
+                                var cleanedData = data.replace('_BEFORE.pdf','');
+                                return "<a target='_blank' href='../Upload/Disposal/" + row['filename_doc'] + "'>" + cleanedData + " <i class='far fa-file-pdf'></i></a>";
+                            }
+
+                        }
+                    },
+                    { "data": "file_tag_status", "className": "align-middle text-center" },
+                    {
+                        "data": "asset_no",
+                        "className": "align-middle",
+                        "orderable": false,
+                        "render": function (data, type, row) {
+                            return '<button class="btn btn-xs info-btn text-center align-middle btn-info mr-2" onclick="open_file_img(`' + row['file_tag'] + '`)"><i class="fas fa-info-circle"></i></button>' +
+                                '<button class="btn btn-xs print-btn text-center align-middle btn-success" ' +
+                                'data-asset-no="' + row.asset_no + '" ' +
+                                'data-asset-subnumber="' + row.asset_subnumber + '" ' +
+                                'data-departement="' + row.department + '" ' +
+                                'data-vendor-name="' + row.vendor_name + '" ' +
+                                'data-capitalized-on="' + row.capitalized_on + '" ' +
+                                'data-name-owner="' + row.name_owner + '" ' +
+                                'data-cost-center="' + row.cost_center + '" ' +
+                                'data-asset-desc="' + row.asset_desc + '">' +
+                                '<i class="fas fa-print"></i></button>';
+                        }
+                    }
+                ]
+            });
+
+            $('input.filter_table', this).on('keyup change', function () {
+                let trgt = $(this).attr('target');
+                if (table.column(trgt).search() !== this.value) {
+                    table
+                        .column(trgt)
+                        .search(this.value)
+                        .draw();
+                }
+            });
+
+            $("form#form_upload").submit(function (e) {
+                e.preventDefault();
+                let formData = new FormData(this);
+                Swal.fire({
+                    title: 'Confirm',
+                    text: "Are you sure ?",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745',
+                    confirmButtonText: 'Yes!',
+                    cancelButtonText: 'No!',
+                    showLoaderOnConfirm: true,
+                    preConfirm: function () {
+                        return new Promise(function (resolve, reject) {
+                            $.ajax({
+                                url: "@Url.Action("UploadAsset")",
+                                type: 'POST',
+                                data: formData,
+                                cache: false,
+                                contentType: false,
+                                processData: false
+                            }).done(function (res) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Done!!',
+                                    html: res,
+                                    width: 800
+                                }).then(function () {
+                                    location.reload();
+                                })
+                            }).fail(function (err) {
+                                swal.fire("Error", "Upload Failed -> " + err, "error");
+                            })
+                        })
+                    },
+                    allowOutsideClick: () => !Swal.isLoading()
+                })
+            })
+
+            $('#table_asset tbody').on('click', '.print-btn', function () {
+                var assetNo = $(this).data('asset-no');
+                var assetSubnumber = $(this).data('asset-subnumber');
+                var departement = $(this).data('departement');
+                var vendorName = $(this).data('vendor-name');
+                var capitalizedOn = $(this).data('capitalized-on');
+                var nameOwner = $(this).data('name-owner');
+                var costCenter = $(this).data('cost-center');
+                var assetDesc = $(this).data('asset-desc');
+
+                print_asset(assetNo, assetSubnumber, departement, vendorName, capitalizedOn, nameOwner, costCenter, assetDesc);
+            });
+
+        });
+
+        function print_asset(assetNo, assetSubnumber, department, vendorName, capitalizedOn, nameOwner, costCenter, assetDesc) {
+            const url = `../Export/PRINT_ASSET_LABEL?asset_no=${encodeURIComponent(assetNo)}&asset_subnumber=${encodeURIComponent(assetSubnumber)}&department=${encodeURIComponent(department)}&vendorName=${encodeURIComponent(vendorName)}&capitalizedOn=${encodeURIComponent(capitalizedOn)}&nameOwner=${encodeURIComponent(nameOwner)}&costCenter=${encodeURIComponent(costCenter)}&assetDesc=${encodeURIComponent(assetDesc)}`;
+
+            fetch(url)
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    }
+                    throw new Error('Network response was not ok.');
+                })
+                .then(blob => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.target = '_blank';
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    window.URL.revokeObjectURL(url);
+                })
+                .catch(error => {
+                    console.error('There was a problem with the fetch operation:', error);
+                });
+        }
+
+        function open_waiting_validate(){
+            $("div#body_validation").html(loading);
+            $("div#modal_validation").modal("show");
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("GetAssetTaggingValidation")"
+            }).done(function(res){
+                $("div#body_validation").html(res);
+            }).fail(function (err) {
+                swal.fire("Error", "Upload Failed -> " + err, "error");
+            })
+        }
+
+        function open_no_tagging() {
+            $("div#body_tagging").html(loading);
+            $("div#modal_tagging").modal("show");
+            $.ajax({
+                type: "GET",
+                url: "@Url.Action("GET_ASSET_NO_TAGGING")"
+            }).done(function (res) {
+                $("div#body_tagging").html(res);
+            }).fail(function (err) {
+                swal.fire("Error", "Upload Failed -> " + err, "error");
+            })
+        }
+
+        function open_file_tagging(file_tag) {
+            $("iframe#show_file_tag").attr("src", file_tag);
+            $("div#modal_file_tag").modal("show");
+        }
+
+        function open_file_img(file_tag) {
+            $("#not_found_icon").remove();
+            if (file_tag !== 'null' && file_tag !== null) {
+                $("#not_found_icon").remove();
+
+                $("iframe#show_file_tag").attr("src", file_tag);
+                $("div#modal_file_tag").modal("show");
+            } else {
+                $("iframe#show_file_tag").hide();
+                $("div#modal_file_tag .modal-body").append('<div id="not_found_icon" style="text-align:center; font-size:100px; color:grey;"><i class="fas fa-exclamation-triangle"></i><p>File Not Available</p></div>');
+                $("div#modal_file_tag").modal("show");
+            }
+        }
+
+        function openPDF(filename) {
+            var pdfURL = "../WI/" + filename;
+            $("#pdf-popup-modal").modal("show");
+            var iframe = document.getElementById("pdf-iframe");
+            iframe.src = pdfURL;
+        }
+
+        function closePDF() {
+            $("#pdf-popup-modal").modal("hide");
+            var iframe = document.getElementById("pdf-iframe");
+            iframe.src = "";
+        }
+    </script>
+}

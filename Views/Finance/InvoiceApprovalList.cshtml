@@ -553,7 +553,7 @@
                 html: `
                 <div>
                     Are you sure you want to ${text_status}?<br><strong>${invoice_no}</strong><br>
-                    <textarea class="form-control mt-3" id="approval_remark" rows="3" style="width: 100%; margin-top:1rem" placeholder="Type Remark (Optional)..."></textarea>
+                    <textarea class="form-control mt-3" id="approval_remark" rows="3" style="width: 100%; margin-top:1rem" placeholder="Type Remark..."></textarea>
                 </div>
                 `,
                 icon: 'warning',
@@ -564,13 +564,14 @@
                 cancelButtonText: 'No!',
                 showLoaderOnConfirm: true,
                 preConfirm: function () {
+                    let approval_remark = $("#approval_remark").val().trim();
+
+                    if (!approval_remark) {
+                        Swal.showValidationMessage('Remark is required! Please provide a remark before proceeding.');
+                        return false;
+                    }
+
                     return new Promise(function (resolve, reject) {
-                        let approval_remark = $("#approval_remark").val().trim();
-
-                        if (!approval_remark) {
-                            approval_remark = '';
-                        }
-
                         $.ajax({
                             type: "POST",
                             url: "@Url.Action("UPDATE_APPROVAL_GATEPASS_INVOICE")",
@@ -582,14 +583,17 @@
                         }).done(function (res) {
                             let arr = res.split(";");
                             if (arr[0] == "success") {
+                                resolve();
                                 Swal.fire("Success", arr[1], "success").then(function () {
                                     table.ajax.reload();
                                 });
                             } else {
+                                reject(arr[1]);
                                 Swal.fire("Error!", arr[1], "error");
                             }
                         }).fail(function (err) {
                             console.error("AJAX error: ", err);
+                            reject(err.responseText);
                             Swal.fire("Action Error!", err.responseText, "error");
                         });
                     });

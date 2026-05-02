@@ -152,7 +152,7 @@
                                 <table class="table professional-table align-center nowrap" id="table_users" style="font-size:8pt; width:100%">
                                     <thead class="align-middle text-center" style="background: var(--primary-blue); color: white; font-weight: 600;">
                                         <tr>
-                                            <th>SESA ID</th>
+                                            <th>User ID</th>
                                             <th>Name</th>
                                             <th>Email</th>
                                             <th>Department</th>
@@ -193,7 +193,7 @@
                 <form enctype="multipart/form-data" id="form_add_user">
                     <table class="table table-sm">
                         <tr>
-                            <td class="align-middle">SESA ID</td>
+                            <td class="align-middle">User ID</td>
                             <td style="width:60%">
                                 <input class="form-control" name="sesa_id" id="sesa_id" style="width:100%" required />
                             </td>
@@ -239,11 +239,9 @@
                             <td>
                                 <select class="form-control" name="level" id="level" style="width:100%" required>
                                     <option value="">-- SELECT LEVEL --</option>
-                                    <option value="admin">Admin</option>
                                     <option value="requestor">Requestor</option>
                                     <option value="finance">Finance</option>
                                     <option value="approver">Approver</option>
-                                    <option value="security">Security</option>
                                 </select>
                             </td>
                         </tr>
@@ -259,7 +257,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="align-middle">Manager SESA ID</td>
+                            <td class="align-middle">Manager User ID</td>
                             <td style="width:60%">
                                 <input class="form-control" name="manager_sesa_id" id="manager_sesa_id" style="width:100%" required />
                             </td>
@@ -291,7 +289,7 @@
                 <form enctype="multipart/form-data" id="form_edit_user">
                     <table class="table table-sm">
                         <tr>
-                            <td class="align-middle">SESA ID</td>
+                            <td class="align-middle">User ID</td>
                             <td style="width:60%">
                                 <input class="form-control" name="e_sesa_id" id="e_sesa_id" style="width:100%" required readonly />
                             </td>
@@ -337,11 +335,9 @@
                             <td>
                                 <select class="form-control" name="e_level" id="e_level" style="width:100%" required>
                                     <option value="">-- SELECT LEVEL --</option>
-                                    <option value="admin">Admin</option>
                                     <option value="requestor">Requestor</option>
                                     <option value="finance">Finance</option>
                                     <option value="approver">Approver</option>
-                                    <option value="security">Security</option>
                                 </select>
                             </td>
                         </tr>
@@ -357,7 +353,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="align-middle">Manager SESA ID</td>
+                            <td class="align-middle">Manager User ID</td>
                             <td style="width:60%">
                                 <input class="form-control" name="e_manager_sesa_id" id="e_manager_sesa_id" style="width:100%" />
                             </td>
@@ -798,9 +794,6 @@
         $("form#form_edit_user").submit(function (e) {
             e.preventDefault();
             let formData = new FormData(this);
-            for (let [key, value] of formData.entries()) {
-                console.log(key, value);
-            }
 
             Swal.fire({
                 title: 'Confirm',
@@ -824,12 +817,21 @@
                         }).done(function (res) {
                             let arr = res.split(";");
                             if (arr[0] == "success") {
+                                let needReload = arr[1] === "cookie_updated";
+
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Done!!',
-                                    html: arr[2]
+                                    html: arr[2],
+                                    timer: needReload ? 2000 : undefined,
+                                    showConfirmButton: !needReload
                                 }).then(function () {
-                                    location.reload();
+                                    if (needReload) {
+                                        // Refresh the page to reflect new level/role
+                                        window.location.href = "@Url.Action("UserList", "Admin")";
+                                    } else {
+                                        location.reload();
+                                    }
                                 });
                             } else {
                                 Swal.fire({

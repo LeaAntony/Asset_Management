@@ -762,8 +762,14 @@
                 cancelButtonText: 'No!',
                 showLoaderOnConfirm: true,
                 preConfirm: function () {
+                    let approval_remark = $("#approval_remark").val().trim();
+
+                    if (!approval_remark) {
+                        Swal.showValidationMessage('Remark is required! Please provide a remark before proceeding.');
+                        return false;
+                    }
+
                     return new Promise(function (resolve, reject) {
-                        let approval_remark = $("#approval_remark").val();
                         $.ajax({
                             type: "POST",
                             url: "@Url.Action("UPDATE_FINANCE_GATEPASS_NONASSET")",
@@ -779,14 +785,17 @@
                                 if (arr[1] != "success") {
                                     email_remark = "<br>Failed to Send Email Approval Update: " + arr[1];
                                 }
+                                resolve();
                                 Swal.fire("Success", "Approval updated!!" + email_remark, "success").then(function () {
                                     location.reload();
                                 });
                             } else {
+                                reject(res);
                                 Swal.fire("Error!", res, "error");
                             }
                         }).fail(function (err) {
                             console.error("AJAX error: ", err);
+                            reject(err.responseText);
                             Swal.fire("Action Error!", err.responseText, "error");
                         });
                     });

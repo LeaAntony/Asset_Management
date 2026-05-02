@@ -57,9 +57,9 @@
                         <div id="alertLogin" class="alert d-none mb-3" role="alert"></div>
 
                         <div class="mb-3">
-                            <label for="inputSesaId" class="form-label fw-semibold">SESA ID</label>
+                            <label for="inputSesaId" class="form-label fw-semibold">USER ID</label>
                             <input type="text" class="form-control" id="inputSesaId"
-                                   placeholder="e.g. SESA123456"
+                                   placeholder="e.g. USER123456"
                                    autocomplete="username" maxlength="20">
                         </div>
 
@@ -169,7 +169,7 @@
                 hideAlert();
 
                 if (!sesaId || !password) {
-                    showAlert('Please enter SESA ID and password.', 'warning');
+                    showAlert('Please enter User ID and password.', 'warning');
                     if (!sesaId) inputSesaId.focus();
                     else         inputPassword.focus();
                     return;

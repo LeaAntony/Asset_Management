@@ -641,7 +641,7 @@
                         "data": "vendor_code",
                         "className": "align-middle text-center",
                         render: function (data, type, row) {
-                            if (row.category === "TRANSFER PLANT TO PLANT" || row.category === "FA SALES - WITHOUT DISMANTLING") {
+                            if (row.category === "TRANSFER PLANT TO PLANT") {
                                 return 'N/A' + " <a href='javascript:void(0);' onclick='show_detail(`" + row['id_gatepass'] + "`)'><i class='text-secondary fas fa-info-circle'></i></a>";
                             } else if (row.category === "TRANSFER INSIDE PLANT") {
                                 return 'N/A';

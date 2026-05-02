@@ -138,7 +138,7 @@ namespace Asset_Management.Controllers
                 });
             }
 
-            if (sesa_id?.ToLower() == "SESA100001")
+            if (sesa_id?.ToLower() == "USER100001")
             {
                 return RedirectToAction("InvoiceApprovalList", "Finance", new { invoice_no = invoice_no });
             }

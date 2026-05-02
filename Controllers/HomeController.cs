@@ -69,7 +69,7 @@ namespace Asset_Management.Controllers
         public async Task<IActionResult> ManualLogin(string sesa_id, string password)
         {
             if (string.IsNullOrWhiteSpace(sesa_id) || string.IsNullOrWhiteSpace(password))
-                return Json(new { success = false, message = "SESA ID and password are required." });
+                return Json(new { success = false, message = "USER ID and password are required." });
 
             try
             {
@@ -77,7 +77,7 @@ namespace Asset_Management.Controllers
 
                 var user = new DatabaseAccessLayer().ValidateManualLogin(sesaIdNormalized, password);
                 if (user is null)
-                    return Json(new { success = false, message = "Invalid SESA ID or password." });
+                    return Json(new { success = false, message = "Invalid USER ID or password." });
 
                 var claims = new List<Claim>
         {
@@ -97,7 +97,7 @@ namespace Asset_Management.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Manual login error for SESA ID: {SesaId}", sesa_id);
+                _logger.LogError(ex, "Manual login error for User ID: {SesaId}", sesa_id);
                 return Json(new { success = false, message = "An error occurred. Please try again." });
             }
         }
@@ -108,7 +108,7 @@ namespace Asset_Management.Controllers
         public async Task<IActionResult> SecurityLogin(string sesa_id, string password)
         {
             if (string.IsNullOrWhiteSpace(sesa_id) || string.IsNullOrWhiteSpace(password))
-                return Json(new { success = false, message = "SESA ID and password are required." });
+                return Json(new { success = false, message = "USER ID and password are required." });
 
             try
             {
@@ -116,7 +116,7 @@ namespace Asset_Management.Controllers
 
                 var user = new DatabaseAccessLayer().ValidateSecurityLogin(sesaIdNormalized, password);
                 if (user is null)
-                    return Json(new { success = false, message = "Invalid SESA ID or password." });
+                    return Json(new { success = false, message = "Invalid USER ID or password." });
 
                 var claims = new List<Claim>
                 {
@@ -136,7 +136,7 @@ namespace Asset_Management.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Security manual login error for SESA ID: {SesaId}", sesa_id);
+                _logger.LogError(ex, "Security manual login error for User ID: {SesaId}", sesa_id);
                 return Json(new { success = false, message = "An error occurred. Please try again." });
             }
         }

@@ -1,8 +1,10 @@
 ﻿using Asset_Management.Function;
 using Asset_Management.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Data.SqlClient;
-using Microsoft.AspNetCore.Authorization;
 using System.Linq.Dynamic.Core;
 using System.Security.Claims;
 
@@ -149,11 +151,47 @@ namespace Asset_Management.Controllers
         }
 
         [HttpPost]
-        public IActionResult UPDATE_USER(string e_sesa_id, string e_name, string e_email, string e_department, string e_plant, string e_level, string e_role, string e_manager_sesa_id)
+        public async Task<IActionResult> UPDATE_USER(string e_sesa_id, string e_name, string e_email, string e_department, string e_plant, string e_level, string e_role, string e_manager_sesa_id)
         {
             var db = new DatabaseAccessLayer();
             string status_msg = db.UPDATE_USER(e_sesa_id, e_name, e_email, e_department, e_plant, e_level, e_role, e_manager_sesa_id);
-            return Content(status_msg + ";" + ";Successfully Updated!", "text/plain");
+
+            if (status_msg != "success")
+                return Content(status_msg + ";;Failed to update!", "text/plain");
+
+            // Cek apakah user yang diupdate adalah user yang sedang login
+            string currentSesaId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            bool isSelf = !string.IsNullOrEmpty(currentSesaId) &&
+                          string.Equals(currentSesaId, e_sesa_id, StringComparison.OrdinalIgnoreCase);
+
+            if (isSelf)
+            {
+                // Update cookie claims dengan level & role baru
+                var claimsIdentity = (ClaimsIdentity)User.Identity;
+
+                var claimsToUpdate = new Dictionary<string, string>
+                {
+                    { "asset_management_name",  e_name  ?? "" },
+                    { "asset_management_level", e_level ?? "" },
+                    { "asset_management_role",  e_role  ?? e_level },
+                };
+
+                foreach (var (claimType, newValue) in claimsToUpdate)
+                {
+                    var existing = claimsIdentity.FindFirst(claimType);
+                    if (existing != null)
+                        claimsIdentity.RemoveClaim(existing);
+                    claimsIdentity.AddClaim(new Claim(claimType, newValue));
+                }
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity));
+
+                return Content("success;cookie_updated;Successfully Updated! Your level/role has been refreshed.", "text/plain");
+            }
+
+            return Content("success;;Successfully Updated!", "text/plain");
         }
 
         [HttpGet]

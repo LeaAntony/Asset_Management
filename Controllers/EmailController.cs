@@ -19,8 +19,8 @@ namespace Asset_Management.Controllers
     public class EmailController : Controller
     {
         private string email_name = "ASSET MANAGEMENT";
-        private string email_account = "YOUR-EMAIL-ACCOUNT";
-        private string email_token = "YOUR-EMAIL-TOKEN";
+        private string email_account = "laravel.website.id@gmail.com";
+        private string email_token = "vahiugikyziriytj";
         private string DbConnection()
         {
             var dbAccess = new DatabaseAccessLayer();
@@ -660,7 +660,7 @@ namespace Asset_Management.Controllers
                         }
                     }
 
-                    using (SqlCommand cmd = new SqlCommand("SELECT TOP 1 name, email FROM mst_users WHERE sesa_id='SESA100001'", conn))
+                    using (SqlCommand cmd = new SqlCommand("SELECT TOP 1 name, email FROM mst_users WHERE sesa_id='USER100001'", conn))
                     {
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
@@ -1778,7 +1778,7 @@ namespace Asset_Management.Controllers
                             }
                         }
                     }
-                    using (SqlCommand cmd = new SqlCommand("SELECT TOP 1 name, email FROM mst_users WHERE sesa_id='SESA100001'", conn))
+                    using (SqlCommand cmd = new SqlCommand("SELECT TOP 1 name, email FROM mst_users WHERE sesa_id='USER100001'", conn))
                     {
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {

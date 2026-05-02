@@ -1787,5 +1787,10 @@
                 $('#exportExcelBtn').hide();
             }
         }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById("shipmentDate").setAttribute("min", today);
+        });
     </script>
 }

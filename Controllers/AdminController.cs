@@ -159,14 +159,12 @@ namespace Asset_Management.Controllers
             if (status_msg != "success")
                 return Content(status_msg + ";;Failed to update!", "text/plain");
 
-            // Cek apakah user yang diupdate adalah user yang sedang login
             string currentSesaId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             bool isSelf = !string.IsNullOrEmpty(currentSesaId) &&
                           string.Equals(currentSesaId, e_sesa_id, StringComparison.OrdinalIgnoreCase);
 
             if (isSelf)
             {
-                // Update cookie claims dengan level & role baru
                 var claimsIdentity = (ClaimsIdentity)User.Identity;
 
                 var claimsToUpdate = new Dictionary<string, string>

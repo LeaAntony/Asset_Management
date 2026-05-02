@@ -19,8 +19,8 @@ namespace Asset_Management.Controllers
     public class EmailController : Controller
     {
         private string email_name = "ASSET MANAGEMENT";
-        private string email_account = "laravel.website.id@gmail.com";
-        private string email_token = "vahiugikyziriytj";
+        private string email_account = "YOUR-EMAIL-ACCOUNT";
+        private string email_token = "YOUR-EMAIL-TOKEN";
         private string DbConnection()
         {
             var dbAccess = new DatabaseAccessLayer();

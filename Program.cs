@@ -93,6 +93,24 @@ builder.Services.AddSession();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddHttpClient();
 builder.Services.AddSingleton<ImportExportFactory>();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowSpecificOrigins", policy =>
+    {
+        policy.WithOrigins(configuration.GetSection("CorsSettings:AllowedOrigins").Get<string[]>() ?? new[] { "https://localhost:7133" })
+              .AllowCredentials()
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+    });
+
+    options.AddPolicy("AllowApiClients", policy =>
+    {
+        policy.WithOrigins(configuration.GetSection("CorsSettings:ApiOrigins").Get<string[]>() ?? Array.Empty<string>())
+              .AllowAnyHeader()
+              .AllowAnyMethod();
+    });
+});
 
 var app = builder.Build();
 
@@ -106,6 +124,8 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.UseCors("AllowSpecificOrigins");
 
 app.UseAuthentication();
 app.UseAuthorization();

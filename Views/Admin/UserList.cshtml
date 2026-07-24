@@ -262,6 +262,18 @@
                                 <input class="form-control" name="manager_sesa_id" id="manager_sesa_id" style="width:100%" required />
                             </td>
                         </tr>
+                        <tr>
+                            <td class="align-middle">Password</td>
+                            <td style="width:60%">
+                                <div class="input-group">
+                                    <input class="form-control" name="password" id="password" type="password" style="width:100%" />
+                                    <button class="btn btn-outline-secondary" type="button" id="btnTogglePasswordAdd" tabindex="-1" aria-label="Toggle password visibility">
+                                        <i class="fas fa-eye" id="iconEyeAdd"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">Leave empty to auto-generate or enter a password (will be bcrypt-hashed).</small>
+                            </td>
+                        </tr>
                     </table>
                     <div class="text-end">
                         <div class="form-group">
@@ -356,6 +368,18 @@
                             <td class="align-middle">Manager User ID</td>
                             <td style="width:60%">
                                 <input class="form-control" name="e_manager_sesa_id" id="e_manager_sesa_id" style="width:100%" />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="align-middle">New Password</td>
+                            <td style="width:60%">
+                                <div class="input-group">
+                                    <input class="form-control" name="e_password" id="e_password" type="password" style="width:100%" placeholder="Leave empty to keep current password" />
+                                    <button class="btn btn-outline-secondary" type="button" id="btnTogglePasswordEdit" tabindex="-1" aria-label="Toggle password visibility">
+                                        <i class="fas fa-eye" id="iconEyeEdit"></i>
+                                    </button>
+                                </div>
+                                <small class="text-muted">Fill only if you want to change the password (will be bcrypt-hashed).</small>
                             </td>
                         </tr>
                     </table>
@@ -909,6 +933,30 @@
                 },
                 allowOutsideClick: () => !Swal.isLoading()
             });
+        });
+
+        document.getElementById('btnTogglePasswordAdd')?.addEventListener('click', function () {
+            var input = document.getElementById('password');
+            var icon = document.getElementById('iconEyeAdd');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        });
+
+        document.getElementById('btnTogglePasswordEdit')?.addEventListener('click', function () {
+            var input = document.getElementById('e_password');
+            var icon = document.getElementById('iconEyeEdit');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
         });
     </script>
 }

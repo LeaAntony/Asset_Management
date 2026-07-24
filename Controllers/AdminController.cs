@@ -92,72 +92,66 @@ namespace Asset_Management.Controllers
         }
 
         [HttpPost]
-        public IActionResult ADD_NEW_USER(string sesa_id, string name, string email, string department, string plant, string level, string role, string manager_sesa_id)
+        public IActionResult ADD_NEW_USER(string sesa_id, string name, string email, string department, string plant, string level, string role, string manager_sesa_id, string password = "")
         {
             var db = new DatabaseAccessLayer();
-            string status_msg = db.ADD_NEW_USER(sesa_id, name, email, department, plant, level, role, manager_sesa_id);
+            string status_msg;
+
+            if (!string.IsNullOrEmpty(password))
+            {
+                status_msg = db.ADD_NEW_USER_WITH_PASSWORD(sesa_id, name, email, department, plant, level, role, manager_sesa_id, password);
+            }
+            else
+            {
+                status_msg = db.ADD_NEW_USER(sesa_id, name, email, department, plant, level, role, manager_sesa_id);
+            }
+
             return Content(status_msg, "text/plain");
         }
 
         [HttpPost]
         public IActionResult DELETE_USER(string id_user)
         {
-            int rowsAffected = 0;
-            using (SqlConnection conn = new SqlConnection(DbConnection()))
-            {
-                conn.Open();
-                string query = @"DELETE FROM mst_users WHERE id_user = @id_user";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@id_user", id_user);
-
-                rowsAffected = cmd.ExecuteNonQuery();
-                conn.Close();
-            }
-
+            var db = new DatabaseAccessLayer();
+            int rowsAffected = db.DELETE_USER_BY_ID(id_user);
             return Json(rowsAffected);
         }
 
         [HttpGet]
         public IActionResult GET_DETAIL_USER(string id_user)
         {
-            using (SqlConnection conn = new SqlConnection(DbConnection()))
+            var db = new DatabaseAccessLayer();
+            var user = db.GET_USER_BY_ID(id_user);
+            if (user != null)
             {
-                conn.Open();
-                string query = @"SELECT * FROM mst_users WHERE id_user = @id_user";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@id_user", id_user);
-
-                SqlDataReader reader = cmd.ExecuteReader();
-                if (reader.Read())
+                return Json(new
                 {
-                    var user = new
-                    {
-                        sesa_id = reader["sesa_id"].ToString(),
-                        name = reader["name"].ToString(),
-                        email = reader["email"].ToString(),
-                        department = reader["department"].ToString(),
-                        plant = reader["plant"].ToString(),
-                        level = reader["level"].ToString(),
-                        role = reader["role"].ToString(),
-                        manager_sesa_id = reader["manager_sesa_id"].ToString()
-                    };
-                    return Json(user);
-                }
-                else
-                {
-                    return NotFound();
-                }
+                    sesa_id = user.sesa_id,
+                    name = user.name,
+                    email = user.email,
+                    department = user.department,
+                    plant = user.plant,
+                    level = user.level,
+                    role = user.role,
+                    manager_sesa_id = user.manager_sesa_id
+                });
             }
+            return NotFound();
         }
 
         [HttpPost]
-        public async Task<IActionResult> UPDATE_USER(string e_sesa_id, string e_name, string e_email, string e_department, string e_plant, string e_level, string e_role, string e_manager_sesa_id)
+        public async Task<IActionResult> UPDATE_USER(string e_sesa_id, string e_name, string e_email, string e_department, string e_plant, string e_level, string e_role, string e_manager_sesa_id, string e_password = "")
         {
             var db = new DatabaseAccessLayer();
             string status_msg = db.UPDATE_USER(e_sesa_id, e_name, e_email, e_department, e_plant, e_level, e_role, e_manager_sesa_id);
 
             if (status_msg != "success")
                 return Content(status_msg + ";;Failed to update!", "text/plain");
+
+            if (!string.IsNullOrEmpty(e_password))
+            {
+                db.SaveNewPass(e_sesa_id, e_password);
+            }
 
             string currentSesaId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             bool isSelf = !string.IsNullOrEmpty(currentSesaId) &&

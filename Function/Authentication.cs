@@ -32,21 +32,44 @@ namespace Asset_Management.Function
                                 .Replace('/', '_');
             return base64;
         }
-        public string MD5Hash(string text)
+
+        public string HashPassword(string password)
         {
-            MD5 md5 = new MD5CryptoServiceProvider();
+            return BCrypt.Net.BCrypt.HashPassword(password, workFactor: 12);
+        }
 
-            md5.ComputeHash(ASCIIEncoding.ASCII.GetBytes(text));
+        public bool VerifyPassword(string password, string storedHash)
+        {
+            if (string.IsNullOrEmpty(storedHash))
+                return false;
 
-            byte[] result = md5.Hash;
-
-            StringBuilder strBuilder = new StringBuilder();
-            for (int i = 0; i < result.Length; i++)
+            if (storedHash.StartsWith("$2", StringComparison.Ordinal))
             {
-                strBuilder.Append(result[i].ToString("x2"));
+                return BCrypt.Net.BCrypt.Verify(password, storedHash);
             }
 
-            return strBuilder.ToString();
+            return storedHash.Equals(LegacyMD5Hash(password), StringComparison.OrdinalIgnoreCase);
+        }
+
+        public static bool IsBcryptHash(string storedHash)
+        {
+            return !string.IsNullOrEmpty(storedHash) && storedHash.StartsWith("$2", StringComparison.Ordinal);
+        }
+
+        private static string LegacyMD5Hash(string text)
+        {
+            using (var md5 = MD5.Create())
+            {
+                byte[] inputBytes = Encoding.UTF8.GetBytes(text);
+                byte[] hashBytes = md5.ComputeHash(inputBytes);
+
+                var sb = new StringBuilder();
+                for (int i = 0; i < hashBytes.Length; i++)
+                {
+                    sb.Append(hashBytes[i].ToString("x2"));
+                }
+                return sb.ToString();
+            }
         }
     }
 }

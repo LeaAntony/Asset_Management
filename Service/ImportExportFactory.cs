@@ -32,11 +32,11 @@ namespace Asset_Management.Service
 
         public void ImportAsset(IFormFile file, string id_login, string sesa_id)
         {
-            string query = "DELETE FROM temp_asset WHERE uploaded_by='" + sesa_id + "'";
             using (SqlConnection conn = new SqlConnection(ConnectionString))
             {
-                using (var cmd = new SqlCommand(query, conn))
+                using (var cmd = new SqlCommand("DELETE FROM temp_asset WHERE uploaded_by = @uploaded_by", conn))
                 {
+                    cmd.Parameters.AddWithValue("@uploaded_by", sesa_id);
                     conn.Open();
                     cmd.ExecuteNonQuery();
                     conn.Close();

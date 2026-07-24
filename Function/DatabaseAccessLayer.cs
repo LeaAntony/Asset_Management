@@ -1254,98 +1254,129 @@ namespace Asset_Management.Function
         
         public UserDetailModel? ValidateManualLogin(string sesa_id, string password)
         {
-            string passwordHash = new Authentication().MD5Hash(password);
+            var auth = new Authentication();
 
-            using SqlConnection conn = new SqlConnection(ConnectionString);
-            conn.Open();
-            using SqlCommand cmd = new SqlCommand("GET_MANUAL_LOGIN", conn)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
-            cmd.Parameters.AddWithValue("@sesa_id", sesa_id);
-            cmd.Parameters.AddWithValue("@password_hash", passwordHash);
+            string storedHash = "";
+            UserDetailModel? user = null;
 
-            using SqlDataReader reader = cmd.ExecuteReader();
-            if (!reader.Read())
-                return null;
-
-            return new UserDetailModel
-            {
-                sesa_id = reader["sesa_id"].ToString(),
-                name = reader["name"].ToString(),
-                email = reader["email"].ToString(),
-                level = reader["level"].ToString(),
-                role = reader["role"].ToString(),
-                department = reader["department"].ToString(),
-                manager_sesa_id = reader["manager_sesa_id"].ToString(),
-                role_manage_user = Convert.ToInt32(reader["role_manage_user"])
-            };
-        }
-        public UserDetailModel? ValidateSecurityLogin(string sesa_id, string password)
-        {
-            string passwordHash = new Authentication().MD5Hash(password);
-
-            using SqlConnection conn = new SqlConnection(ConnectionString);
-            conn.Open();
-            using SqlCommand cmd = new SqlCommand("GET_SECURITY_LOGIN", conn)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
-            cmd.Parameters.AddWithValue("@sesa_id", sesa_id);
-            cmd.Parameters.AddWithValue("@password_hash", passwordHash);
-
-            using SqlDataReader reader = cmd.ExecuteReader();
-            if (!reader.Read())
-                return null;
-
-            return new UserDetailModel
-            {
-                sesa_id = reader["sesa_id"].ToString(),
-                name = reader["name"].ToString(),
-                email = reader["email"].ToString(),
-                level = reader["level"].ToString(),
-                role = reader["role"].ToString(),
-                department = reader["department"].ToString(),
-                manager_sesa_id = reader["manager_sesa_id"].ToString(),
-                role_manage_user = Convert.ToInt32(reader["role_manage_user"])
-            };
-        }
-        public string CheckOldPass(string sesa_id, string old_pass)
-        {
-            var hashpassword = new Authentication();
-            string passwordHash = hashpassword.MD5Hash(old_pass);
             using (SqlConnection conn = new SqlConnection(ConnectionString))
             {
                 conn.Open();
-                using (SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM mst_users WHERE sesa_id=@sesa_id AND password=@passwordHash", conn))
+                using (SqlCommand cmd = new SqlCommand("GET_USER_LOGIN", conn))
                 {
+                    cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@sesa_id", sesa_id);
-                    cmd.Parameters.AddWithValue("@passwordHash", passwordHash);
-
-                    int rowCount = (int)cmd.ExecuteScalar();
-
-                    if (rowCount > 0)
+                    using (SqlDataReader reader = cmd.ExecuteReader())
                     {
-                        return "success";
-                    }
-                    else
-                    {
-                        return "failed";
+                        if (!reader.Read())
+                            return null;
+
+                        storedHash = reader["password"]?.ToString() ?? "";
+                        user = new UserDetailModel
+                        {
+                            sesa_id = reader["sesa_id"].ToString(),
+                            name = reader["name"].ToString(),
+                            email = reader["email"].ToString(),
+                            level = reader["level"].ToString(),
+                            role = reader["role"].ToString(),
+                            department = reader["department"].ToString(),
+                            manager_sesa_id = reader["manager_sesa_id"].ToString(),
+                            role_manage_user = Convert.ToInt32(reader["role_manage_user"])
+                        };
                     }
                 }
             }
+
+            if (!auth.VerifyPassword(password, storedHash))
+                return null;
+
+            if (!Authentication.IsBcryptHash(storedHash))
+            {
+                SaveNewPass(sesa_id, password);
+            }
+
+            return user;
         }
-        public string SaveNewPass(string sesa_id, string new_pass)
+
+        public UserDetailModel? ValidateSecurityLogin(string sesa_id, string password)
         {
-            var hashpassword = new Authentication();
-            string passwordHash = hashpassword.MD5Hash(new_pass);
+            var auth = new Authentication();
+
+            string storedHash = "";
+            UserDetailModel? user = null;
+
             using (SqlConnection conn = new SqlConnection(ConnectionString))
             {
                 conn.Open();
-                using (SqlCommand cmd = new SqlCommand("UPDATE mst_users SET password=@password WHERE sesa_id=@sesa_id", conn))
+                using (SqlCommand cmd = new SqlCommand("GET_USER_LOGIN", conn))
                 {
-                    cmd.Parameters.AddWithValue("@password", passwordHash);
+                    cmd.CommandType = CommandType.StoredProcedure;
                     cmd.Parameters.AddWithValue("@sesa_id", sesa_id);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (!reader.Read())
+                            return null;
+
+                        storedHash = reader["password"]?.ToString() ?? "";
+                        user = new UserDetailModel
+                        {
+                            sesa_id = reader["sesa_id"].ToString(),
+                            name = reader["name"].ToString(),
+                            email = reader["email"].ToString(),
+                            level = reader["level"].ToString(),
+                            role = reader["role"].ToString(),
+                            department = reader["department"].ToString(),
+                            manager_sesa_id = reader["manager_sesa_id"].ToString(),
+                            role_manage_user = Convert.ToInt32(reader["role_manage_user"])
+                        };
+                    }
+                }
+            }
+
+            if (!auth.VerifyPassword(password, storedHash))
+                return null;
+
+            if (!Authentication.IsBcryptHash(storedHash))
+            {
+                SaveNewPass(sesa_id, password);
+            }
+
+            return user;
+        }
+
+        public string CheckOldPass(string sesa_id, string old_pass)
+        {
+            var auth = new Authentication();
+
+            using (SqlConnection conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand("CHECK_USER_PASSWORD", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@sesa_id", sesa_id);
+
+                    var storedHash = cmd.ExecuteScalar()?.ToString();
+                    if (string.IsNullOrEmpty(storedHash))
+                        return "failed";
+
+                    return auth.VerifyPassword(old_pass, storedHash) ? "success" : "failed";
+                }
+            }
+        }
+
+        public string SaveNewPass(string sesa_id, string new_pass)
+        {
+            var auth = new Authentication();
+            string passwordHash = auth.HashPassword(new_pass);
+            using (SqlConnection conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand("UPDATE_USER_PASSWORD", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@sesa_id", sesa_id);
+                    cmd.Parameters.AddWithValue("@password", passwordHash);
                     cmd.ExecuteNonQuery();
                     return "success";
                 }
@@ -2586,6 +2617,95 @@ namespace Asset_Management.Function
                     return "success";
                 }
             }
+        }
+
+        public string ADD_NEW_USER_WITH_PASSWORD(string sesa_id, string name, string email, string department, string plant, string level, string role, string manager_sesa_id, string password)
+        {
+            var auth = new Authentication();
+            string passwordHash = auth.HashPassword(password);
+
+            using (SqlConnection conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand("ADD_NEW_USER_WITH_PASSWORD", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@sesa_id", sesa_id);
+                    cmd.Parameters.AddWithValue("@name", name);
+                    cmd.Parameters.AddWithValue("@email", email);
+                    cmd.Parameters.AddWithValue("@department", department);
+                    cmd.Parameters.AddWithValue("@plant", plant);
+                    cmd.Parameters.AddWithValue("@level", level);
+                    cmd.Parameters.AddWithValue("@role", role);
+                    cmd.Parameters.AddWithValue("@manager_sesa_id", manager_sesa_id);
+                    cmd.Parameters.AddWithValue("@password", passwordHash);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            string status = reader["Status"].ToString();
+                            string message = reader["Message"].ToString();
+                            return status + ";" + message;
+                        }
+                    }
+                }
+            }
+            return "error;Unknown error occurred.";
+        }
+
+        public int DELETE_USER_BY_ID(string id_user)
+        {
+            using (SqlConnection conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand("DELETE_USER_BY_ID", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@id_user", id_user);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            return Convert.ToInt32(reader["rows_affected"]);
+                        }
+                    }
+                }
+            }
+            return 0;
+        }
+
+        public UserDetailModel? GET_USER_BY_ID(string id_user)
+        {
+            using (SqlConnection conn = new SqlConnection(ConnectionString))
+            {
+                conn.Open();
+                using (SqlCommand cmd = new SqlCommand("GET_USER_BY_ID", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@id_user", id_user);
+
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            return new UserDetailModel
+                            {
+                                sesa_id = reader["sesa_id"].ToString(),
+                                name = reader["name"].ToString(),
+                                email = reader["email"].ToString(),
+                                department = reader["department"].ToString(),
+                                plant = reader["plant"].ToString(),
+                                level = reader["level"].ToString(),
+                                role = reader["role"].ToString(),
+                                manager_sesa_id = reader["manager_sesa_id"].ToString()
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
         }
         public List<AssetListModel> GET_ASSET_GATEPASS(string asset_search)
         {
